@@ -11,7 +11,7 @@ import time
 # -------------------------------------- #
 PORT = 8888
 RUN_DATE = time.strftime("%H:%M:%S on %B %d %Y")
-VERSION = 0
+VERSION = '0'
 # -------------------------------------- #
 
 
@@ -32,10 +32,3 @@ application = tornado.web.Application([
 application.listen(PORT)
 # start main event loop
 tornado.ioloop.IOLoop.instance().start()
-
-# # This method tells us some information about the current running version of the server, etc.
-# def validate_version(self, callback):
-# 	callback(version_info={
-# 		'start_date'	: "Program started: %s " % RUN_DATE,
-# 		'version'		: VERSION
-# 	})

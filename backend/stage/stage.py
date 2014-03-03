@@ -10,8 +10,8 @@ class Stage(object):
         return None
 
     def begin(self):
-        for player in self.game:
-            player.stage_begin(stage_type=self.stage_type)
+        for player in self.game.players:
+            player.stage_begin(stage_type=self.stage_type, callback=self.after_begin)
 
     def after_begin(self):
         pass

@@ -73,13 +73,11 @@ class Game(object):
 
         # begin new stage
         self.current_stage.begin()
-        # hack?: run after_begin
-        self.current_stage.after_begin()
 
     ### convenience ###
 
     def players_with_job(self, job):
-        return [p for p in self.players if p.currentJob == job]
+        return [p for p in self.players if p.current_job == job]
 
     def resource_with_job(self, job):
         return dict(list(zip(self.jobs, self.resources)))[job]

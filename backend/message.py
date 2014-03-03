@@ -77,10 +77,15 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
                     self._invoke(method_name, kwargs)
             else:
                 raise InvalidMessageFormatError(msg)
-        except (InvalidMessageFormatError, InvalidMethodError, InvalidArgumentError):
-            # re-raise error for now
+        except (InvalidMessageFormatError, InvalidMethodError, InvalidArgumentError) as err:
+            # log error for now
             # todo: more sophisticated error handling
-            raise
+            err_msg = "==> Caught error %s" % type(err).__name__
+            if err.args:
+                err_msg += " with details:"
+            helpers.print_header(err_msg)
+            if err.args:
+                print(err.args)
         else:
             # send a receipt if no error
             self._send_receipt(message)

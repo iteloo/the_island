@@ -1,5 +1,3 @@
-__author__ = 'iteloo'
-
 from unittest import TestCase
 from unittest.mock import Mock, patch, call
 from tornado.testing import AsyncHTTPTestCase
