@@ -1,4 +1,4 @@
-from . import game
+from backend import game
 
 
 class GameController(object):

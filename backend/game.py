@@ -1,4 +1,5 @@
-from . import helpers
+from backend import helpers
+from backend.stage import job_stage
 
 
 class Game(object):
@@ -27,18 +28,18 @@ class Game(object):
         self.players = []
 
         # stage management variables
-        self.stage_queue = []
+        self.stage_queue = [job_stage.JobStage]
         self.current_stage = None
 
         # start the first stage
-        # self.next_stage()
+        self.next_stage()
 
     ### stage management ###
 
     def next_stage(self):
 
         # hack: keeping track of title stages
-        ending_notification_stage = False
+        # ending_notification_stage = False
 
         # end current stage if it exists
         if self.current_stage:
@@ -61,12 +62,12 @@ class Game(object):
         params = {}
 
         # if the next stage requires a title screen, and we haven't already displayed it, then display it
-        if next_stage.title() and not ending_notification_stage:
-            # push stage back up
-            self.stage_queue.insert(0, next_stage)
-            # display title screen instead
-            params = {'title': next_stage.title()}
-            # next_stage = notification.NotificationStage
+        # if next_stage.title() and not ending_notification_stage:
+        #     # push stage back up
+        #     self.stage_queue.insert(0, next_stage)
+        #     # display title screen instead
+        #     params = {'title': next_stage.title()}
+        #     # next_stage = notification.NotificationStage
 
         # instantiate stage object
         self.current_stage = next_stage(self, **params)
@@ -90,7 +91,7 @@ class Game(object):
         # logging
         helpers.print_header("==> %s joined" % new_player)
         # tell current stage to modify any data
-        # self.current_stage.handle_add_player(newPlayer)
+        self.current_stage.handle_add_player(new_player)
 
         # notify all players that player count has increased
         for player in self.players:
@@ -106,7 +107,7 @@ class Game(object):
         helpers.print_header("==> %s left" % player)
 
         # tell current stage to modify any data
-        # self.current_stage.handle_remove_player(player)
+        self.current_stage.handle_remove_player(player)
 
         # notify all players that player count has decreased
         for player in self.players:

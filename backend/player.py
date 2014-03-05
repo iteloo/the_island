@@ -2,6 +2,8 @@ from backend import message
 from backend import game_controller
 from backend import helpers
 
+import collections
+
 
 class Player(message.MessageDelegate):
     _currentId = 0
@@ -36,29 +38,33 @@ class Player(message.MessageDelegate):
         callback(*args, **kwargs)
 
     @staticmethod
-    def server_info(callback):
+    def server_info(callback: collections.Callable) -> None:
         """Return information about the current running version of the server"""
 
         from backend.server import RUN_DATE, VERSION
         callback(start_date=RUN_DATE, version=VERSION)
 
     @message.forward('self.current_game')
-    def item_activated(self, item_name):
+    def item_activated(self, item_name: str) -> None:
         pass
 
     @message.forward('self.current_game.current_stage')
-    def job_selected(self, item_name):
+    def job_selected(self, job: str) -> None:
         pass
 
     @message.forward('self.current_game.current_stage')
-    def ready(self, item_name):
+    def ready(self) -> None:
         pass
 
     @message.forward('self.current_game.current_stage')
-    def trade_proposed(self, item_name):
+    def trade_proposed(self, items: dict, callback: collections.Callable) -> None:
         pass
 
     ### client-side methods ###
+
+    @message.sending
+    def echo(self, callback: collections.Callable, *args, **kwargs):
+        pass
 
     @message.sending
     def update_game_info(self, player_count: int) -> None:
@@ -69,7 +75,7 @@ class Player(message.MessageDelegate):
         pass
 
     @message.sending
-    def stage_begin(self, stage_type: str, callback) -> None:
+    def stage_begin(self, stage_type: str, callback: collections.Callable) -> None:
         pass
 
     @message.sending
@@ -77,7 +83,7 @@ class Player(message.MessageDelegate):
         pass
 
     @message.sending
-    def display_event(self, title: str, image_name: str, text: str, responses: list, callback) -> None:
+    def display_event(self, title: str, image_name: str, text: str, responses: list, callback: collections.Callable) -> None:
         pass
 
     ### messageDelegate methods ###
@@ -94,8 +100,8 @@ class Player(message.MessageDelegate):
     ### game management methods ###
 
     def join_game(self, game):
-        game.add_player(self)
         self.current_game = game
+        game.add_player(self)
 
     def quit_game(self):
         self.current_game.remove_player(self)

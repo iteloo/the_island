@@ -50,13 +50,13 @@ window.go = ->
 		#return false
 		if stage? 
 			window.stage.end()
-		if data.stageType == 'Job'
+		if data.stage_type == 'Job'
 			window.stage = new JobStage()
-		else if data.stageType == 'Production'
+		else if data.stage_type == 'Production'
 			window.stage = new ProductionStage()
-		else if data.stageType == 'Notification'
+		else if data.stage_type == 'Notification'
 			window.stage = new NotificationStage()
-		else if data.stageType == 'Trading'
+		else if data.stage_type == 'Trading'
 			window.stage = new TradingStage()
 		else
 			throw "Illegal stage sent: #{data.stageType}"
@@ -81,8 +81,8 @@ window.go = ->
 	pycon.register_for_event 'InventoryCountRequested', (data) ->
 		pycon.transaction {action: data.callback, data: player.getInventoryCount.call player }
 
-	pycon.register_for_event 'JobSelectionUpdated', (data) ->
-		stage.job_selection_updated.call(stage,data) if stage.job_selection_updated?
+	pycon.register_for_event 'update_job_selections', (data) ->
+		stage.update_job_selections.call(stage,data) if stage.update_job_selections?
 
 	pycon.register_for_event 'echo', (data, responder) ->
 		responder.respond(data)

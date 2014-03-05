@@ -23,7 +23,7 @@ class Stage(object):
         pass
 
     def handle_add_player(self, new_player):
-        new_player.stage_begin(stage_type=self.stage_type)
+        new_player.stage_begin(stage_type=self.stage_type, callback=self.after_begin)
 
     def handle_remove_player(self, player_removed):
         pass

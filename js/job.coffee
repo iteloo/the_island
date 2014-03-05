@@ -26,8 +26,7 @@ class window.JobStage extends Stage
 		if @getSelectedJob()
 			# Show the ready as GREEN instead of GRAY
 			$('.ready').addClass('active')
-			pycon.transaction { 'action': 'ready' }, ->
-				yes
+			pycon.transaction 'ready'
 
 	getSelectedJob: ->
 		for name,job of @jobs
@@ -41,8 +40,8 @@ class window.JobStage extends Stage
 		j.end.call j for name,job in @jobs
 		$('.ready').hide().unbind()
 
-	job_selection_updated: (data) ->
-		for job,players of data.playersWithJob
+	update_job_selections: (data) ->
+		for job,players of data.job_selections
 			console.log '==> ', job, ' with players ', players
 			@jobs[job].number_players = players.length
 			@jobs[job].needsRefresh.call @jobs[job]
@@ -66,7 +65,7 @@ class window.JobView
 	select: ->
 		job.unselect.call(job) for q,job of window.stage.jobs
 		@selected = yes
-		pycon.transaction { action: 'selectJob', data: { jobSelected: @job_code }}
+		pycon.transaction 'job_selected', { job: @job_code }
 		@needsRefresh()
 
 	unselect: ->

@@ -4,6 +4,7 @@ import tornado.websocket
 import functools
 import json
 import collections
+import inspect
 
 
 # noinspection PyAttributeOutsideInit
@@ -254,11 +255,12 @@ def forward(recipient):
         @functools.wraps(method)
         def wrapper(*args, **kwargs):
             # if recipient is a path, attempt to get actual object
-            if type(recipient) == 'str':
+            if isinstance(recipient, str):
                 path = recipient.split('.')
                 # retrieve recipient object
                 try:
-                    r = vars()[path.pop(0)]
+                    # object will be looked for in the scope of `method`
+                    r = inspect.getcallargs(method, *args, **kwargs)[path.pop(0)]
                     for attr in path:
                         r = getattr(r, attr)
                 except (NameError, AttributeError):
@@ -290,7 +292,7 @@ class InvalidMessageFormatError(Exception):
 
 ### method calling helpers ###
 
-def call(method, check_error=True, *args, **kwargs):
+def call(method, *args, check_error=True, **kwargs):
     """Attempt to call the method
 
     If a matching method cannot be found, an InvalidMethodError is raised. If the arguments are invalid, an InvalidArgumentError is raised. Setting the `check_error` option to False will suppress these errors.
@@ -299,6 +301,7 @@ def call(method, check_error=True, *args, **kwargs):
 
     try:
         if method and isinstance(method, collections.Callable):
+            # todo: This will mask any TypeError exceptions we might not want to mask
             try:
                 return method(*args, **kwargs)
             except TypeError:
@@ -310,7 +313,7 @@ def call(method, check_error=True, *args, **kwargs):
             raise
 
 
-def call_on(recipient, method_name, check_error=True, *args, **kwargs):
+def call_on(recipient, method_name, *args, check_error=True, **kwargs):
     """Attempt to call a method with the same name on the recipient
 
     If a matching method cannot be found, an InvalidMethodError is raised. If the arguments are invalid, an InvalidArgumentError is raised. Setting the `check_error` option to False will suppress these errors.
@@ -318,4 +321,4 @@ def call_on(recipient, method_name, check_error=True, *args, **kwargs):
     """
 
     method = getattr(recipient, method_name, None)
-    call(method, check_error, *args, **kwargs)
+    call(method, *args, check_error=check_error, **kwargs)

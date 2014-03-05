@@ -1,8 +1,20 @@
 import pprint
 import functools
+from collections import defaultdict
 
 
 ### dictionary ###
+
+def invert(d, container=list, codomain=None):
+    s = defaultdict(container)
+    for k, v in d.items():
+        s[v].append(k)
+    # fill in range
+    if codomain is not None:
+        for v in codomain:
+            s[v]
+    return dict(s)
+
 
 def extract(d, *args, default=None):
     """Return a tuple of results extracted from the dictionary using strings of paths to the values
