@@ -5,6 +5,8 @@ class window.Player
 	constructor: ->
 		# Initialize the production facilities
 		@products = []
+		@health = 100
+		@food 	= 75
 		@productionfacilities = []
 		for p in [ 'bandage', 'food', 'bullet', 'point' ]
 			@products[p] = new Product(p)
@@ -27,10 +29,28 @@ class window.Player
 			inventory[name] = p.amount
 		return inventory
 
+	giveHealth: (amount) ->
+		if (@health + amount) < 100
+			@health += amount
+		else 
+			@health = 100
+		health_points = Math.ceil(@health / 34.0)
+		health_string = Array(health_points+1).join("&#9829;") + Array(4-health_points).join("&#9825;")
+		$('.statusbar .health').html health_string
+
+	giveFood: (amount) ->
+		if (@food + amount) < 100
+			@food += amount
+		else 
+			@food = 100
+		food_points = Math.ceil(@food / 33.0)
+		food_string = Array(food_points+1).join("<span class='food'>&nbsp;&nbsp;&nbsp;</span>") + Array(3-food_points+1).join("<span class='anti food'>&nbsp;&nbsp;&nbsp;</span>")
+		$('.statusbar .hunger').html food_string
+
 	givePoints: (amount) ->
 		@products['point'].amount += amount
 		point_string = Array(@products['point'].amount+1).join("&#9673;")
-		$('.statusbar .points').html point_string
+		$('.statusbar .points').html point_string 
 
 
 class window.Product
@@ -38,6 +58,20 @@ class window.Product
 		@amount = 0
 		@color = "green" 
 		yes
+
+	activate: ->
+		yes
+
+class window.Bandage extends Product
+	activate: ->
+		if @amount > 0
+			player.giveHealth 35
+			@amount -= 1
+
+class window.Food extends Product
+	activate: ->
+		if @amount > 0
+			player.giveFood 10
 
 class window.Job
 	constructor: (@title, @color) ->

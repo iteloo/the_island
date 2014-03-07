@@ -10,7 +10,9 @@ class window.TradingStage extends Stage
 		$('.tradingstage-interface').show()
 
 		$('.health').show()
-
+		$('.hunger').show()
+		player.giveFood 0
+		player.giveHealth 0
 		# Register all of the trading products boxes. They are instances
 		# of the class TradingProduct, which handles the visual behavior
 		# of the trading boxes. They are connected to the player's set of
@@ -93,6 +95,7 @@ class window.TradingStage extends Stage
 		$('.tradingstage-interface').hide()
 		$('.trading').unbind()
 		$('.health').hide()
+		$('.hunger').hide()
 		$('.tradingstage-interface .inventory').sortable('destroy')
 		if $('.placeholder').length > 0
 			$('.placeholder').remove()

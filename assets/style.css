@@ -265,6 +265,10 @@ html,body {
 		padding: 1%;
 	}
 
+	.hunger {
+		display:none;
+	}
+
 	.gold {
 		background-position:center; 
 		background-repeat: no-repeat;
@@ -273,6 +277,40 @@ html,body {
 		margin-left: 10px;
 		background-image: url('/assets/gold.png');
 		background-size: contain;
+	}
+
+	.carrot {
+		background-position:center; 
+		background-repeat: no-repeat;
+		display: inline-block;
+		width: 50px;
+		margin-left: 10px;
+		background-image: url('/assets/carrot.png');
+		background-size: contain;
+	}
+
+	.bullet {
+		background-position:center; 
+		background-repeat: no-repeat;
+		display: inline-block;
+		width: 50px;
+		margin-left: 10px;
+		background-image: url('/assets/bullet.png');
+		background-size: contain;
+	}
+
+	.food {
+		background-position:center; 
+		background-repeat: no-repeat;
+		display: inline-block;
+		width: 50px;
+		margin-left: 10px;
+		background-image: url('/assets/carrot.png');
+		background-size: contain;
+	}
+
+	.anti.food {
+		background-image: url('/assets/carrot_transparent.png');
 	}
 
 	.tradingstage-interface .card {

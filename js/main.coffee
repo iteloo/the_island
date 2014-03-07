@@ -39,13 +39,13 @@ $ ->
 # When everything is loaded and ready to go, this function is called.
 window.go = ->
 	# When the player count changes we need to update the status bar.
-	pycon.register_for_event 'playerCountChanged', (data) ->
+	pycon.register_for_event 'update_game_info', (data) ->
 		console.log 'Player count changed: ', data
-		$('.playercount').html data.count 
+		$('.playercount').html(data.player_count)
 
 	# When the program starts, the server will issue a "stageBegin" to me
 	# to indicate the current stage. Here's where I register for that.
-	pycon.register_for_event 'stageBegin', (data) ->
+	pycon.register_for_event 'stage_begin', (data, responder) ->
 		#window.stage = new TradingStage()
 		#return false
 		if stage? 
@@ -60,6 +60,9 @@ window.go = ->
 			window.stage = new TradingStage()
 		else
 			throw "Illegal stage sent: #{data.stageType}"
+
+		# Inform them that they don't need our help.
+		responder.respond()
 
 	# When a trade is found to be completed with somebody, then we
 	# need to inform the current stage so that it can do what it likes
@@ -80,6 +83,9 @@ window.go = ->
 
 	pycon.register_for_event 'JobSelectionUpdated', (data) ->
 		stage.job_selection_updated.call(stage,data) if stage.job_selection_updated?
+
+	pycon.register_for_event 'echo', (data, responder) ->
+		responder.respond(data)
 
 	pycon.register_for_event 'GivePoints', (data) ->
 		player.givePoints data.amount

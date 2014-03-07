@@ -1,4 +1,4 @@
 {
-	"websocket_url": "ws://HOST_IP_HERE/json",
-	"server_version": 0
+	"websocket_url": "ws://192.168.0.103:8888/json",
+	"server_version": "0"
 }
