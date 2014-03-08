@@ -90,3 +90,18 @@ def logging(lcolor=LColor.OKGREEN):
         return wrapper
 
     return decorator
+
+
+def compile_coffeescript(dir, output):
+    """Compile coffeescripts in dir"""
+
+    print_header("==> Compiling coffeescripts in %s into %s" % (dir, output))
+
+    import coffeescript
+    import os
+
+    scripts = []
+    for (dirpath, dirnames, filenames) in os.walk(dir):
+        scripts.extend([os.path.join(dirpath, filename) for filename in filenames if filename.endswith('.coffee')])
+    with open(output, 'w') as f:
+        f.write(coffeescript.compile_file(scripts))

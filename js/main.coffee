@@ -19,7 +19,7 @@ $ ->
  	# First step: connect to the specified WebSocket
  	# server.
 
- 	window.socket = new WebSocket( window.config.websocket_url )
+  window.socket = new WebSocket("ws://" + location.host + "/json")
  	# Get ready for when the socket opens
  	window.jevent 'SocketOpened', ->
 		console.log 'The socket was opened.'
