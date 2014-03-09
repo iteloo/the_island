@@ -1,0 +1,144 @@
+<html>
+<head>
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" ></script>
+	<script src="http://code.jquery.com/mobile/1.4.0/jquery.mobile-1.4.0.min.js"></script>
+	<script src="/main.js"></script>
+	<script src="/lib/gyro.js"></script>
+	<script src="//code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+	<script src="/lib/touch-punch.js"></script>
+	<script src='/lib/jquery.fittext.js'></script>
+	<link href='http://fonts.googleapis.com/css?family=Droid+Sans:400,700' rel='stylesheet' type='text/css'>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<link rel='stylesheet' type='text/css' href='/assets/style.css' />
+
+	<script>
+		// The code below is supposed to stop scrolling from happening accidentally
+		function stopScrolling( touchEvent ) { touchEvent.preventDefault(); }
+		document.addEventListener( 'touchmove' , stopScrolling , false );
+		// JQuery Mobile likes to emit both tap and taphold together: prevent it
+		$.event.special.tap.emitTapOnTaphold = false
+	</script>
+
+</head>
+<body onload=" setTimeout( function(){ window.scrollTo(0, 1) }, 0); ">
+
+<div class='statusbar'>
+	<span class='playercount'>1</span>
+	<span class='points'></span>
+	<span class='health'>&#9829;&#9829;&#9825;</span>
+	<span class='ready'>READY</span>
+	<span class='countdown' style="display:none"></span>
+</div>
+
+<div class='overlay'></div>
+
+<div class='interface'>	
+
+	<div class='message'>
+		<h3 class='title'></h3>
+		<p class='text'></p>
+	</div>
+
+	<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+	STAGE 1: JOB STAGE
+	In this stage, the player can choose their
+	job.
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!-->
+
+	<div class='jobstage-interface'>
+
+		<div data-job-type='production' class='box production'>
+			<span></span>
+		</div>
+
+		<div data-job-type='farm' class='box farm'>
+			<span></span>
+		</div>
+
+		<div data-job-type='hospital' class='box hospital'>
+			<span></span>
+		</div>
+
+		<div data-job-type='watchtower' class='box watchtower'>
+			<span></span>
+		</div>
+
+	</div>
+
+	<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+	STAGE 2: PRODUCTION STAGE
+	In this stage, the player can choose how to spend
+	his production points.
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!-->
+
+	<div class='productionstage-interface'>
+
+		<div data-job-type='production' class='box production'>
+			<span></span>
+		</div>
+
+		<div data-job-type='farm' class='box farm'>
+			<span></span>
+		</div>
+
+		<div data-job-type='hospital' class='box hospital'>
+			<span></span>
+		</div>
+
+		<div data-job-type='watchtower' class='box watchtower'>
+			<span></span>
+		</div>
+
+	</div>
+
+	<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+	STAGE 2: TRADING STAGE
+	In this stage, the player can choose how to spend
+	his gold in order to improve his production.
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!-->
+	
+	<div class='tradingstage-interface'>
+
+
+		<div class='powerups'>
+			<div class='left'>
+				<h4>Hospital</h4>
+				<p>Looking a little... silly</p>
+			</div>
+			<div class='right'></div>	
+		</div>
+
+		<div class='inventory'>
+
+			<div data-production-type='bandage' class='box red'>
+				<span class='amount'></span>
+				<span class='price'></span>
+			</div>
+
+			<div data-production-type='food' class='box blue'>
+				<span class='amount'></span>
+				<span class='price'></span>
+			</div>
+
+			<div data-production-type='bullet' class='box purple'>
+				<span class='amount'></span>
+				<span class='price'></span>
+			</div>
+		</div>
+
+		<div class='trading'>
+			<span>TRADE</span>
+			<br />
+
+			<span data-production-type='bandage' class='tradecount'></span>
+			<span data-production-type='food' class='tradecount'></span>
+			<span data-production-type='bullet' class='tradecount'></span>
+		</div>
+
+	</div>
+
+</div>
+
+</body>
+</html>
