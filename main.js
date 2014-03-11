@@ -56,31 +56,8 @@
     };
 
     PyAPI.prototype.trigger_event = function(eventName, data) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-      var e, _i, _len, _ref, _results;
-
-=======
-      var e, _i, _len, _ref1, _results;
->>>>>>> 381e1af... fixed a broken hack that colin insisted on putting in
-=======
-      var e, _i, _len, _ref, _results;
-
->>>>>>> 50e7270... error
-=======
-      var e, _i, _len, _ref, _results;
-
->>>>>>> 995e6a5... Some things
-=======
-      var e, _i, _len, _ref1, _results;
->>>>>>> 13229b4... added some images for resources
-=======
       var e, response, _i, _len, _ref, _results;
 
->>>>>>> 96ff4ae... Updated clients to use new message sending format
       if (this.event_responders[eventName] != null) {
         _ref = this.event_responders[eventName];
         _results = [];
@@ -121,16 +98,6 @@
 
   })();
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 50e7270... error
-=======
->>>>>>> 995e6a5... Some things
-=======
   this.PyAPIResponder = (function() {
     function PyAPIResponder(callback_id, parent) {
       this.callback_id = callback_id;
@@ -166,7 +133,6 @@
 
   })(PyAPIResponder);
 
->>>>>>> 96ff4ae... Updated clients to use new message sending format
   window.Stage = (function() {
     function Stage() {
       this.time = 0;
@@ -209,13 +175,8 @@
     __extends(NotificationStage, _super);
 
     function NotificationStage() {
-<<<<<<< HEAD
-      _ref = NotificationStage.__super__.constructor.apply(this, arguments);
-      return _ref;
-=======
       _ref1 = NotificationStage.__super__.constructor.apply(this, arguments);
       return _ref1;
->>>>>>> 96ff4ae... Updated clients to use new message sending format
     }
 
     NotificationStage.prototype.end = function() {
@@ -226,39 +187,11 @@
 
   })(Stage);
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 381e1af... fixed a broken hack that colin insisted on putting in
-=======
->>>>>>> 995e6a5... Some things
-=======
->>>>>>> 13229b4... added some images for resources
-  window.jevents = [];
-
-  window.jevent = function(eventName, eventAction) {
-    var f, _i, _len, _ref1, _results;
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-<<<<<<< HEAD
-=======
->>>>>>> 381e1af... fixed a broken hack that colin insisted on putting in
-=======
->>>>>>> 50e7270... error
-=======
-
->>>>>>> 995e6a5... Some things
-=======
->>>>>>> 13229b4... added some images for resources
-=======
   window.jevents = [];
 
   window.jevent = function(eventName, eventAction) {
     var f, _i, _len, _ref2, _results;
 
->>>>>>> 96ff4ae... Updated clients to use new message sending format
     if (eventAction == null) {
       eventAction = null;
     }
@@ -339,28 +272,6 @@
     return $('.countdown').html(stage.time);
   };
 
-<<<<<<< HEAD
-      function JobStage() {
-        var me;
-        me = this;
-        this.jobs = [];
-        $('.jobstage-interface .box.job').each(function() {
-          return jobs.push(new JobView($(this)));
-        });
-        true;
-      }
-
-      JobStage.prototype.end = function() {
-        var j, _i, _len, _ref1, _results;
-        _ref1 = this.jobs;
-        _results = [];
-        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-          j = _ref1[_i];
-          _results.push(j.end.call(j));
-        }
-        return _results;
-      };
-=======
   window.JobStage = (function(_super) {
     __extends(JobStage, _super);
 
@@ -389,11 +300,7 @@
     JobStage.prototype.ready = function() {
       if (this.getSelectedJob()) {
         $('.ready').addClass('active');
-        return pycon.transaction({
-          'action': 'ready'
-        }, function() {
-          return true;
-        });
+        return pycon.transaction('ready');
       }
     };
 
@@ -411,24 +318,8 @@
     };
 
     JobStage.prototype.end = function() {
-<<<<<<< HEAD
-<<<<<<< HEAD
-      var j, _i, _len, _ref1, _results;
-<<<<<<< HEAD
->>>>>>> 50e7270... error
-=======
->>>>>>> 995e6a5... Some things
-=======
-      var job, name, _i, _len, _ref1;
-<<<<<<< HEAD
->>>>>>> d1337a3... numerous unexplainable things
-
-=======
->>>>>>> 13229b4... added some images for resources
-=======
       var job, name, _i, _len, _ref2;
 
->>>>>>> 96ff4ae... Updated clients to use new message sending format
       $('.jobstage-interface').hide();
       $('.ready').hide().unbind().removeClass('active');
       _ref2 = this.jobs;
@@ -439,28 +330,10 @@
       return $('.ready').hide().unbind();
     };
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-    })(Stage);
-    return window.JobView = (function() {
-      function JobView(dom_object) {
-        var me;
-        this.dom_object = dom_object;
-        me = this;
-        this.job = window.jobs[this.dom_object.attr('data-job-type')];
-        this.job_code = this.dom_object.attr('data-job-type');
-        this.selected = false;
-        this.number_players = 0;
-        this.dom_object.tap(function() {
-          return me.tap.call(me());
-        });
-      }
-=======
-=======
-    JobStage.prototype.job_selection_updated = function(data) {
+    JobStage.prototype.update_job_selections = function(data) {
       var job, players, _ref2, _results;
 
-      _ref2 = data.playersWithJob;
+      _ref2 = data.job_selections;
       _results = [];
       for (job in _ref2) {
         players = _ref2[job];
@@ -471,11 +344,9 @@
       return _results;
     };
 
->>>>>>> 995e6a5... Some things
     return JobStage;
 
   })(Stage);
->>>>>>> 50e7270... error
 
   window.JobView = (function() {
     function JobView(dom_object) {
@@ -503,11 +374,8 @@
         job.unselect.call(job);
       }
       this.selected = true;
-      pycon.transaction({
-        action: 'selectJob',
-        data: {
-          jobSelected: this.job_code
-        }
+      pycon.transaction('job_selected', {
+        job: this.job_code
       });
       return this.needsRefresh();
     };
@@ -560,20 +428,30 @@
     throw "Configuration loaded from 'configuration.json' is invalid.";
   }
 
-  $(function() {
-    window.socket = new WebSocket(window.config.websocket_url);
-    window.jevent('SocketOpened', function() {});
-    console.log('The socket was opened.');
-    socket.onopen = function() {
-      console.log("Socket connection opened successfully.");
-      window.pycon = new PyAPI(window.socket);
-      return window.go();
-    };
-    return socket.onclose = function() {
-      console.log("Socket connection was closed, unexpectedly.");
-      return window.message.display("Oh No!", "I don't know why, but the socket was closed (!)");
-    };
-  });
+  if (TEST === true) {
+    $(function() {
+      var t;
+
+      console.log("Initializing testing mode.");
+      t = new TestSuite();
+      return t.run();
+    });
+  } else {
+    $(function() {
+      window.socket = new WebSocket("ws://" + location.host + "/json");
+      window.jevent('SocketOpened', function() {});
+      console.log('The socket was opened.');
+      socket.onopen = function() {
+        console.log("Socket connection opened successfully.");
+        window.pycon = new PyAPI(window.socket);
+        return window.go();
+      };
+      return socket.onclose = function() {
+        console.log("Socket connection was closed, unexpectedly.");
+        return window.message.display("Oh No!", "I don't know why, but the socket was closed (!)");
+      };
+    });
+  }
 
   window.go = function() {
     pycon.register_for_event('update_game_info', function(data) {
@@ -584,13 +462,13 @@
       if (typeof stage !== "undefined" && stage !== null) {
         window.stage.end();
       }
-      if (data.stageType === 'Job') {
+      if (data.stage_type === 'Job') {
         window.stage = new JobStage();
-      } else if (data.stageType === 'Production') {
+      } else if (data.stage_type === 'Production') {
         window.stage = new ProductionStage();
-      } else if (data.stageType === 'Notification') {
+      } else if (data.stage_type === 'Notification') {
         window.stage = new NotificationStage();
-      } else if (data.stageType === 'Trading') {
+      } else if (data.stage_type === 'Trading') {
         window.stage = new TradingStage();
       } else {
         throw "Illegal stage sent: " + data.stageType;
@@ -616,9 +494,9 @@
         data: player.getInventoryCount.call(player)
       });
     });
-    pycon.register_for_event('JobSelectionUpdated', function(data) {
-      if (stage.job_selection_updated != null) {
-        return stage.job_selection_updated.call(stage, data);
+    pycon.register_for_event('update_job_selections', function(data) {
+      if (stage.update_job_selections != null) {
+        return stage.update_job_selections.call(stage, data);
       }
     });
     pycon.register_for_event('echo', function(data, responder) {
@@ -715,26 +593,8 @@
     };
 
     Player.prototype.getInventoryCount = function() {
-<<<<<<< HEAD
-      var inventory, name, p, _ref1;
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-<<<<<<< HEAD
-=======
->>>>>>> 381e1af... fixed a broken hack that colin insisted on putting in
-=======
->>>>>>> 50e7270... error
-=======
-
->>>>>>> 995e6a5... Some things
-=======
->>>>>>> 13229b4... added some images for resources
-=======
       var inventory, name, p, _ref2;
 
->>>>>>> 96ff4ae... Updated clients to use new message sending format
       inventory = {};
       _ref2 = this.products;
       for (name in _ref2) {
@@ -858,168 +718,117 @@
 
   window.player = new Player();
 
-  window.ProductionStage = (function(_super) {
-    __extends(ProductionStage, _super);
+  window.TestSuite = (function() {
+    function TestSuite() {
+      var _this = this;
 
-    function ProductionStage() {
-      var me;
+      this.dom_element = $('.test-output');
+      this.passed = 0;
+      this.test_count = Object.keys(tests).length;
+      window.onerror = function() {
+        return _this.fail();
+      };
+      this.failed = false;
+    }
 
-      me = this;
-      this.jobs = {};
-      $('.ready').show();
-      $('.ready').tap(function() {
-        return me.ready.call(me);
-      });
-      $('.productionstage-interface').show();
-      $('.productionstage-interface .box').each(function() {
-        var jobcode;
+    TestSuite.prototype.run = function() {
+      console.log("Starting TestSuite...");
+      this.passed = 0;
+      this.test_keys = Object.keys(tests);
+      return this._run_next_test();
+    };
 
-        jobcode = $(this).attr('data-job-type');
-        return me.jobs[jobcode] = new ProductionView($(this));
-      });
-      $('.productionstage-interface .box').fitText(1, {
-        maxFontSize: '40px'
-      });
+    TestSuite.prototype._run_next_test = function() {
+      var err, name, test;
+
+      name = this.test_keys.pop();
+      if (name == null) {
+        console.log("All tests passed.");
+        this.dom_element.after("<h1>All tests passed.</h1>");
+        this.dom_element.css('color', 'green');
+        return;
+      }
+      test = window.tests[name];
+      console.log("Running test '" + name + "'...");
+      try {
+        if (!test(new TestDelegate(this))) {
+          throw "failure";
+        }
+      } catch (_error) {
+        err = _error;
+        this.failed = true;
+        console.warn("Test '" + name + "' failed with error " + err);
+        throw "Test suite ended due to failed test.";
+      }
+    };
+
+    TestSuite.prototype.pass = function() {
+      this.passed++;
+      this.report_state();
+      return this._run_next_test();
+    };
+
+    TestSuite.prototype.fail = function() {
+      this.report_state();
+      return this.dom_element.after("<h1 style='color:red'>Test failed</h1>");
+    };
+
+    TestSuite.prototype.report_state = function() {
+      return this.dom_element.html("" + this.passed + " / " + this.test_count + " tests passed.");
+    };
+
+    return TestSuite;
+
+  })();
+
+  window.TestDelegate = (function() {
+    function TestDelegate(parent) {
+      this.parent = parent;
       true;
     }
 
-    ProductionStage.prototype.ready = function() {
-      if (player.points() === 0) {
-        $('.ready').addClass('active');
-        this.report_production();
-        return pycon.transaction({
-          'action': 'ready'
-        }, function() {
-          return true;
-        });
-      }
+    TestDelegate.prototype.pass = function() {
+      this.parent.pass();
+      return true;
     };
 
-    ProductionStage.prototype.end = function() {
-<<<<<<< HEAD
-<<<<<<< HEAD
-      var p, _i, _len, _ref1;
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-<<<<<<< HEAD
-=======
->>>>>>> 381e1af... fixed a broken hack that colin insisted on putting in
-=======
->>>>>>> 50e7270... error
-=======
-
->>>>>>> 995e6a5... Some things
-      $(this.stage_name).hide();
-      $('.ready').unbind();
-      $('.ready').hide();
-      _ref1 = this.productions;
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        p = _ref1[_i];
-        p.unbind.call(p);
-=======
-      var job, name, _i, _len, _ref1;
-      _ref1 = this.jobs;
-      for (job = _i = 0, _len = _ref1.length; _i < _len; job = ++_i) {
-        name = _ref1[job];
-=======
-      var job, name, _i, _len, _ref4;
-
-      _ref4 = this.jobs;
-      for (job = _i = 0, _len = _ref4.length; _i < _len; job = ++_i) {
-        name = _ref4[job];
->>>>>>> 96ff4ae... Updated clients to use new message sending format
-        j.end.call(j);
->>>>>>> ad00571... Added production and job selection updates
-      }
-      $('.ready').hide().unbind().removeClass('active');
-      return $('.productionstage-interface').hide();
+    TestDelegate.prototype.fail = function() {
+      this.parent.fail();
+      return false;
     };
 
-    ProductionStage.prototype.report_production = function() {
-      var job, name, production, _ref4;
-
-      production = {};
-      _ref4 = this.jobs;
-      for (name in _ref4) {
-        job = _ref4[name];
-        production[name] = job.number_points;
-      }
-      return pycon.transaction({
-        action: 'updatePoints',
-        data: {
-          production: production
-        }
-      });
-    };
-
-    ProductionStage.prototype.job_selection_updated = function(data) {
-      var job, players, _ref4, _results;
-
-      _ref4 = data.playersWithJob;
-      _results = [];
-      for (job in _ref4) {
-        players = _ref4[job];
-        console.log('==> ', job, ' with players ', players);
-        this.jobs[job].number_players = players.length;
-        _results.push(this.jobs[job].needsRefresh.call(this.jobs[job]));
-      }
-      return _results;
-    };
-
-    return ProductionStage;
-
-  })(Stage);
-
-  window.ProductionView = (function() {
-    function ProductionView(dom_object) {
-      var me;
-
-      this.dom_object = dom_object;
-      me = this;
-      this.job = window.jobs[this.dom_object.attr('data-job-type')];
-      this.job_code = this.dom_object.attr('data-job-type');
-      this.dom_object.css('background-color', this.job.color);
-      this.number_points = 0;
-      this.dom_object.tap(function() {
-        return me.tap.call(me);
-      });
-      this.dom_object.taphold(function() {
-        return me.tapHold.call(me);
-      });
-      this.needsRefresh();
-    }
-
-    ProductionView.prototype.tap = function() {
-      if (player.points() > 0) {
-        this.number_points += 1;
-        player.givePoints(-1);
-        return this.needsRefresh();
-      }
-    };
-
-    ProductionView.prototype.tapHold = function() {
-      player.givePoints(this.number_points);
-      this.number_points = 0;
-      return this.needsRefresh();
-    };
-
-    ProductionView.prototype.needsRefresh = function() {
-      var point_string;
-
-      this.dom_object.html('');
-      this.dom_object.append($("<h3>" + this.job.title + "</h3>"));
-      point_string = Array(this.number_points + 1).join("&#9673;");
-      return this.dom_object.append($("<p>" + point_string + "</p>"));
-    };
-
-    ProductionView.prototype.end = function() {
-      return this.dom_object.unbind();
-    };
-
-    return ProductionView;
+    return TestDelegate;
 
   })();
+
+  window.assert = function(statement, error) {
+    if (!statement) {
+      throw error;
+    } else {
+      return true;
+    }
+  };
+
+  window.tests = {
+    'Connect to the host': function(t) {
+      window.socket = new WebSocket("ws://" + location.host + "/json");
+      socket.onopen = function() {
+        socket.close();
+        return t.pass();
+      };
+      return true;
+    },
+    'Start socket, and start game': function(t) {
+      window.socket = new WebSocket("ws://" + location.host + "/json");
+      return socket.onopen = function() {
+        window.pycon = new PyAPI(window.socket);
+        return pycon.register_for_event('stage_begin', function(data, responder) {
+          responder.respond();
+          return t.pass();
+        });
+      };
+    }
+  };
 
   window.TradingStage = (function(_super) {
     __extends(TradingStage, _super);
@@ -1032,12 +841,9 @@
       this.timers = [];
       $('.tradingstage-interface').show();
       $('.health').show();
-<<<<<<< HEAD
-=======
       $('.hunger').show();
       player.giveFood(0);
       player.giveHealth(0);
->>>>>>> 96ff4ae... Updated clients to use new message sending format
       this.products = {};
       $('.tradingstage-interface .box').each(function() {
         var type;
@@ -1094,35 +900,14 @@
     }
 
     TradingStage.prototype.end = function() {
-<<<<<<< HEAD
-      var interval, _i, _len, _ref1;
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-<<<<<<< HEAD
-=======
->>>>>>> 381e1af... fixed a broken hack that colin insisted on putting in
-=======
->>>>>>> 50e7270... error
-=======
-
->>>>>>> 995e6a5... Some things
-=======
->>>>>>> 13229b4... added some images for resources
-=======
       var interval, _i, _len, _ref4;
 
->>>>>>> 96ff4ae... Updated clients to use new message sending format
       $('.countdown').hide();
       $('.ready').hide().unbind().removeClass('active');
       $('.tradingstage-interface').hide();
       $('.trading').unbind();
       $('.health').hide();
-<<<<<<< HEAD
-=======
       $('.hunger').hide();
->>>>>>> 96ff4ae... Updated clients to use new message sending format
       $('.tradingstage-interface .inventory').sortable('destroy');
       if ($('.placeholder').length > 0) {
         $('.placeholder').remove();
@@ -1137,26 +922,8 @@
     };
 
     TradingStage.prototype.bump = function() {
-<<<<<<< HEAD
-      var card, items, name, p, _i, _len, _ref1, _ref2;
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-<<<<<<< HEAD
-=======
->>>>>>> 381e1af... fixed a broken hack that colin insisted on putting in
-=======
->>>>>>> 50e7270... error
-=======
-
->>>>>>> 995e6a5... Some things
-=======
->>>>>>> 13229b4... added some images for resources
-=======
       var card, items, name, p, _i, _len, _ref4, _ref5;
 
->>>>>>> 96ff4ae... Updated clients to use new message sending format
       items = {};
       _ref4 = this.products;
       for (name in _ref4) {
@@ -1273,26 +1040,8 @@
     };
 
     TradingStage.prototype.refreshCards = function() {
-<<<<<<< HEAD
-      var card, deck, element, index, _i, _len, _ref1;
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-<<<<<<< HEAD
-=======
->>>>>>> 381e1af... fixed a broken hack that colin insisted on putting in
-=======
->>>>>>> 50e7270... error
-=======
-
->>>>>>> 995e6a5... Some things
-=======
->>>>>>> 13229b4... added some images for resources
-=======
       var card, deck, element, index, _i, _len, _ref4;
 
->>>>>>> 96ff4ae... Updated clients to use new message sending format
       deck = $('.powerups .deck');
       deck.html("");
       index = 0;
@@ -1313,17 +1062,8 @@
     };
 
     TradingStage.prototype.timer_begin = function(countdown) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-      var count_down, do_production, me;
-=======
       var count_down, me;
 
->>>>>>> 08f8993... helpers
-=======
-      var count_down, me;
-
->>>>>>> 96ff4ae... Updated clients to use new message sending format
       me = this;
       this.time = countdown;
       count_down = function() {
@@ -1362,49 +1102,7 @@
     };
 
     TradingProduct.prototype.sell = function() {
-<<<<<<< HEAD
-      var me;
-
-      if (window.stage.type !== 'TradingStage') {
-        return;
-      }
-      if (this.product.amount > 0) {
-        this.product.amount -= 1;
-        me = this;
-        pycon.transaction({
-          action: 'sell',
-          data: {
-            productToSell: this.product.name
-          }
-        }, function(data) {
-          var card, card_bonus, _i, _len, _ref1;
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-<<<<<<< HEAD
-=======
->>>>>>> 381e1af... fixed a broken hack that colin insisted on putting in
-=======
->>>>>>> 50e7270... error
-=======
-
->>>>>>> 995e6a5... Some things
-          card_bonus = 1;
-          _ref1 = player.cards;
-          for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-            card = _ref1[_i];
-            card_bonus *= card.get_pay_bonus.call(card, me.product.name);
-          }
-          player.giveGold(Math.round(data.pay * card_bonus, 0));
-          return me.needsRefresh.call(me);
-        });
-        return true;
-      } else {
-        return false;
-      }
-=======
       return true;
->>>>>>> ad00571... Added production and job selection updates
     };
 
     TradingProduct.prototype.needsRefresh = function() {

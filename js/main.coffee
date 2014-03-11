@@ -13,28 +13,34 @@ try
 catch error
 	throw "Configuration loaded from 'configuration.json' is invalid."
 
-# -------------------------------------- #`
 
-$ ->
- 	# First step: connect to the specified WebSocket
- 	# server.
+# Prevent actual execution of the script
+# when in testing mode.
+if TEST == yes
+	$ ->
+		console.log "Initializing testing mode."
+		t = new TestSuite()
+		t.run()
+else # Initialization of everything.
+	$ ->
+	 	# First step: connect to the specified WebSocket
+	 	# server.
+	 	window.socket = new WebSocket("ws://" + location.host + "/json")
+	 	# Get ready for when the socket opens
+	 	window.jevent 'SocketOpened', ->
+			console.log 'The socket was opened.'
 
-  window.socket = new WebSocket("ws://" + location.host + "/json")
- 	# Get ready for when the socket opens
- 	window.jevent 'SocketOpened', ->
-		console.log 'The socket was opened.'
+	 	# This function is called only when the socket is opened. 
+	 	socket.onopen = ->
+	 		console.log "Socket connection opened successfully."
+	 		window.pycon = new PyAPI window.socket
 
- 	# This function is called only when the socket is opened. 
- 	socket.onopen = ->
- 		console.log "Socket connection opened successfully."
- 		window.pycon = new PyAPI window.socket
-
- 		window.go()
- 		
- 	# Since the socket should never close, this is always unexpected.
- 	socket.onclose = ->
- 		console.log "Socket connection was closed, unexpectedly."
- 		window.message.display "Oh No!", "I don't know why, but the socket was closed (!)"
+	 		window.go()
+	 		
+	 	# Since the socket should never close, this is always unexpected.
+	 	socket.onclose = ->
+	 		console.log "Socket connection was closed, unexpectedly."
+	 		window.message.display "Oh No!", "I don't know why, but the socket was closed (!)"
 
 # When everything is loaded and ready to go, this function is called.
 window.go = ->

@@ -31,6 +31,7 @@ def run(port):
     # start application
     application = tornado.web.Application([
         (r"/json", message.MessageHandler, {'delegate_class': player.Player}),
+        (r"/test()", DebugStaticFileHandler, {'path': 'assets/test.html'}),
         (r"/()", DebugStaticFileHandler, {'path': 'assets/web.html'}),
         (r"/(.*)", DebugStaticFileHandler, {'path': '.'})
     ])
