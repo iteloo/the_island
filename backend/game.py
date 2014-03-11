@@ -1,5 +1,6 @@
 from backend import helpers
 from backend.stage import job_stage
+from backend.stage import trading_stage
 
 
 class Game(object):
@@ -28,7 +29,7 @@ class Game(object):
         self.players = []
 
         # stage management variables
-        self.stage_queue = [job_stage.JobStage]
+        self.stage_queue = [trading_stage.TradingStage]
         self.current_stage = None
 
         # start the first stage
