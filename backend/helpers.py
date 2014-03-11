@@ -1,6 +1,7 @@
 import pprint
 import functools
 from collections import defaultdict
+import inspect
 
 
 ### dictionary ###
@@ -47,13 +48,10 @@ def tree_dict(d, indent=4):
 
 
 class LColor(object):
-    HEADER = '\033[95m'
-    INCOMING = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    OUTGOING = '\033[36m'
-    FAIL = '\033[91m'
+    HEADER = '\033[95m'  # red
+    INCOMING = '\033[34m'  # blue
+    OUTGOING = '\033[36m'  # green
+    REGULAR = '\033[37m'  # light grey
     ENDC = '\033[0m'
 
 
@@ -65,26 +63,21 @@ def cprint(s, lcolor):
     print(lcolor + s + LColor.ENDC)
 
 
-def logging(lcolor=LColor.OKGREEN):
+def logging(lcolor=LColor.REGULAR):
     """Return a decorator that logs the method call in the specified lcolor."""
 
     def decorator(method):
-        method_name = method.__name__
-
         @functools.wraps(method)
         def wrapper(*args, **kwargs):
-            log = "===> calling function '%s'" % method_name
-            try:
-                method.__self__
-            except AttributeError:
-                pass
-            else:
-                log += " on %s" % method.__self__
-            if args:
+            log = "===> calling '%s'" % method.__name__
+            callargs = inspect.getcallargs(method, *args, **kwargs)
+            if 'self' in callargs:
+                log += " on %s" % callargs.pop('self')
+            if callargs:
                 log += " with args:"
             cprint(log, lcolor)
-            if args:
-                print(tree_dict(args))
+            if callargs:
+                print(tree_dict(callargs))
             return method(*args, **kwargs)
 
         return wrapper

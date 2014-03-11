@@ -15,18 +15,17 @@ args = parser.parse_args()
 
 # compile coffeescript
 if args.c:
-    helpers.compile_coffeescript('js', 'assets/main.js')
+    helpers.compile_coffeescript('js', 'main.js')
 
 # Convention over configuration dictates that we 
 # choose a default port in the case that the user 
 # doesn't have one specified. The default port is 8888
-if 'PORT' in os.environ:
-	default_port = os.environ['PORT']
+if args.p:
+    port = int(args.p)
+elif 'PORT' in os.environ:
+    port = int(os.environ['PORT'])
 else:
-	default_port = 8888
-
-# get port from args, otherwise from environ vars
-port = int(args.p if args.p else default_port)
+    port = 8888
 
 # run server
 server.run(port)
