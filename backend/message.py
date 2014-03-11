@@ -33,6 +33,9 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
 
     """
 
+    def __str__(self):
+        return "Message handler for %s" % self.delegate
+
     # this replaces __init__ (in fact it seems to be called before __init__)
     def initialize(self, delegate_class=None):
         # make new delegate object
@@ -51,6 +54,10 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
         call_on(self.delegate, 'on_open', check_error=False)
 
     def on_message(self, message):
+
+        # logging
+        helpers.cprint("==> Received message from client: ", helpers.LColor.INCOMING)
+        print(message)
 
         # All messages will follow the format described in https://github.com/iteloo/the_island/wiki/Server-client-interface
         try:
@@ -89,7 +96,8 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
                 print(err.args)
         else:
             # send a receipt if no error
-            self._send_receipt(message)
+            # self._send_receipt(message)
+            pass
 
     def on_close(self):
         # notify delegate
@@ -97,9 +105,15 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
         # remove delegate
         self.delegate = None
 
+    def write_message(self, message, binary=False):
+        # logging
+        helpers.cprint("==> Sending message to client: ", helpers.LColor.OUTGOING)
+        print(message)
+        # call original
+        super().write_message(message, binary)
+
     ### method-call handling ###
 
-    @helpers.logging(helpers.LColor.INCOMING)
     def _invoke(self, method_name, kwargs):
         """Attempt to call the method on delegate with the specified arguments
 
@@ -173,7 +187,6 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
 
         """
 
-        @helpers.logging(helpers.LColor.OUTGOING)
         def callback(**callback_args):
             # create message
             msg = {
@@ -217,28 +230,29 @@ def sending(method):
 
     # noinspection PyProtectedMember
     @functools.wraps(method)
-    def wrapper(self, **kwargs):
+    def wrapper(self, *args, **kwargs):
         # self should be the `delegate` object here
 
         # call local (server-side) method first
-        method(self, **kwargs)
+        method(self, *args, **kwargs)
 
         # prepare dictionary of args
-        args = kwargs.copy()
+        callargs = inspect.getcallargs(method, self, *args, **kwargs)
+        callargs.pop('self')
 
         # if our method takes in a callback
-        if 'callback' in args:
-            # store callback object on server-side
-            callback_id = self._message_handler._register_callback(args['callback'])
+        if 'callback' in callargs:
+            # store callback object on server-side (and remove from message)
+            callback_id = self._message_handler._register_callback(callargs.pop('callback'))
             # attach callback id to message
-            args.pop('callback')
-            args['callback_id'] = callback_id
+            callargs['callback_id'] = callback_id
 
         # create message
-        msg = {'method': method.__name__, 'args': args}
+        msg = {'method': method.__name__, 'args': callargs}
 
         # send message to client
-        self._message_handler.write_message(json.dumps(msg))
+        msg = json.dumps(msg)
+        self._message_handler.write_message(msg)
 
     return wrapper
 
