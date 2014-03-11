@@ -1,10 +1,10 @@
- _____ _   _  _____   _____ _____ _       ___   _   _______  
+` _____ _   _  _____   _____ _____ _       ___   _   _______  
 |_   _| | | ||  ___| |_   _/  ___| |     / _ \ | \ | |  _  \ 
   | | | |_| || |__     | | \ `--.| |    / /_\ \|  \| | | | | 
   | | |  _  ||  __|    | |  `--. \ |    |  _  || . ` | | | | 
   | | | | | || |___   _| |_/\__/ / |____| | | || |\  | |/ /  
   \_/ \_| |_/\____/   \___/\____/\_____/\_| |_/\_| \_/___/   
-
+`
 - 			 version  	:	0
 -			 author 	:	Colin Merkel + Leo Hsu
 
@@ -45,6 +45,15 @@ To automate the editing of configuration.json when pushing to and pulling from t
 	required
 
 For this to work, you must also keep the .gitattributes file in the top level of this repo. 
+
+----------------------------------------------------
+RUNNING THE TEST SUITE(S)
+----------------------------------------------------
+
+JS/client-based test suite:
+
+1. Start the server.
+2. Access "http://localhost:PORT/test".
 
 ----------------------------------------------------
 COMPILING THE COFFEESCRIPT
