@@ -14,7 +14,7 @@ class window.TestSuite
 		@_run_next_test()
 
 	_run_next_test: ->
-		name = @test_keys.pop()
+		name = @test_keys.shift()
 		# If we're out of tests, all tests pass.
 		if !name?
 			console.log "All tests passed."
@@ -25,10 +25,10 @@ class window.TestSuite
 		test = window.tests[name]
 		console.log "Running test '#{name}'..."
 		try 
-			throw "failure" if !test(new TestDelegate @)
+			throw "test '#{name}' returned invalid value" if !test(new TestDelegate @)
 		catch err
 			@failed = yes
-			console.warn "Test '#{name}' failed with error #{err}"
+			console.warn "Test '#{name}' failed with error '#{err}'"
 			throw "Test suite ended due to failed test."
 
 	pass: ->
@@ -70,11 +70,53 @@ window.tests = {
 
 	# This test will only pass if we connect to the game and receive
 	# a "stage begin" command.
-	'Start socket, and start game': (t) ->
+	'Start socket, and observe stage_begin': (t) ->
 		window.socket = new WebSocket("ws://" + location.host + "/json")
 		socket.onopen = ->
 			window.pycon = new PyAPI window.socket
+			# Only let them pass the test when we receive a "stage begin"
+			# message.
 			pycon.register_for_event 'stage_begin', (data, responder) ->
 				responder.respond()
-				t.pass()
+				# Let the stage set itself up and so forth before we
+				# execute the actual pass.
+				setTimeout ->
+					t.pass()
+				,250
+			# Initialize the level, do all registrations for
+			# different messages, etc.
+			window.go()
+		yes
+
+	# Update the health bars, inventory, etc.
+	'Test: update_player_info': (t) ->
+		# The following format comes from the description on 
+		# https://github.com/iteloo/the_island/wiki/update_player_info
+		m = {
+			method: 'update_player_info',
+			args: {
+				inventory: {
+					bandage: Math.round( Math.random() * 100 ),
+					food: Math.round( Math.random() * 100 ),
+					bullet: Math.round( Math.random() * 100 )
+					log: Math.round( Math.random() * 100 )
+				},
+				condition: {
+					health: Math.round( Math.random() * 100 )
+					antihunger: Math.round( Math.random() * 100 )
+				}
+			}
+		}
+		# Invoke a fake message according to the above format.
+		pycon.onmessage {data: JSON.stringify m } 
+		# Test that everything loaded.
+		assert player.products.bandage.amount == m.args.inventory.bandage, "Failed inventory update"
+		assert player.products.food.amount == m.args.inventory.food, "Failed inventory update"
+		assert player.products.bullet.amount == m.args.inventory.bullet, "Failed inventory update"
+		assert player.products.log.amount == m.args.inventory.log, "Failed inventory update"
+		assert player.health == m.args.condition.health, "Failed condition:health update"
+		assert player.food == m.args.condition.antihunger, "Failed condition:antihunger update"
+		# Well, they must have passed the test.
+		t.pass()
+
 }

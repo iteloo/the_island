@@ -23,3 +23,6 @@ class window.Stage
 
 	products_updated: ->
 		yes
+
+	update: ->
+		yes

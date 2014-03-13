@@ -30,7 +30,7 @@
     PyAPI.prototype.onmessage = function(message) {
       message = JSON.parse(message.data);
       if (message.method == null) {
-        throw "Received illegal message '" + (JSON.stringify(message)) + "' without method header.";
+        throw "Received illegal message without method header.";
       } else if (message.method === "handle_callback") {
         if (this.response_handlers[message.args.callback_id] == null) {
           throw "Received illegal callback ID in a handle_callback response.";
@@ -92,11 +92,6 @@
       }
       this.socket.send(JSON.stringify(transmission));
       return console.log('Transaction sent: ', JSON.stringify(transmission));
-    };
-
-    PyAPI.prototype.reconnectWithSocket = function(new_socket) {
-      this.socket.close();
-      return this.socket = new_socket;
     };
 
     return PyAPI;
@@ -272,10 +267,6 @@
       return location.reload(true);
     }
   });
-
-  window.updateStatusBar = function() {
-    return window.updateInterface();
-  };
 
   window.updateInterface = function() {
     if (this.stage != null) {
@@ -496,18 +487,9 @@
       _ref2 = data.inventory;
       for (name in _ref2) {
         amount = _ref2[name];
-        player.products[name].amount = amount;
+        player.products[name] = amount;
       }
-      if (data.condition != null) {
-        if (data.condition.health != null) {
-          player.setHealth(data.condition.health);
-        }
-        if (data.condition.antihunger != null) {
-          player.setFood(data.condition.antihunger);
-        }
-      }
-      stage.update();
-      return window.updateInterface();
+      return stage.update();
     });
     pycon.register_for_event('TradeCompleted', function(data) {
       if (typeof stage !== "undefined" && stage !== null) {
@@ -607,9 +589,9 @@
 
       this.products = [];
       this.health = 100;
-      this.food = 100;
+      this.food = 75;
       this.productionfacilities = [];
-      _ref2 = ['bandage', 'food', 'bullet', 'log'];
+      _ref2 = ['bandage', 'food', 'bullet', 'point'];
       for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
         p = _ref2[_i];
         this.products[p] = new Product(p);
@@ -617,9 +599,14 @@
       this.products['bandage'].color = '#DD514C';
       this.products['food'].color = '#5EB95E';
       this.products['bullet'].color = '#777';
-      this.products['log'].color = '#FAD232';
+      this.products['point'].color = '#FAD232';
+      this.cards = [];
       true;
     }
+
+    Player.prototype.points = function() {
+      return this.products['point'].amount;
+    };
 
     Player.prototype.getInventoryCount = function() {
       var inventory, name, p, _ref2;
@@ -633,16 +620,11 @@
       return inventory;
     };
 
-    Player.prototype.update = function() {
-      this.setHealth(this.health);
-      return this.setFood(this.food);
-    };
-
-    Player.prototype.setHealth = function(amount) {
+    Player.prototype.giveHealth = function(amount) {
       var health_points, health_string;
 
-      if (amount < 100) {
-        this.health = amount;
+      if ((this.health + amount) < 100) {
+        this.health += amount;
       } else {
         this.health = 100;
       }
@@ -651,17 +633,25 @@
       return $('.statusbar .health').html(health_string);
     };
 
-    Player.prototype.setFood = function(amount) {
+    Player.prototype.giveFood = function(amount) {
       var food_points, food_string;
 
-      if (amount < 100) {
-        this.food = amount;
+      if ((this.food + amount) < 100) {
+        this.food += amount;
       } else {
         this.food = 100;
       }
       food_points = Math.ceil(this.food / 33.0);
       food_string = Array(food_points + 1).join("<span class='food'>&nbsp;&nbsp;&nbsp;</span>") + Array(3 - food_points + 1).join("<span class='anti food'>&nbsp;&nbsp;&nbsp;</span>");
       return $('.statusbar .hunger').html(food_string);
+    };
+
+    Player.prototype.givePoints = function(amount) {
+      var point_string;
+
+      this.products['point'].amount += amount;
+      point_string = Array(this.products['point'].amount + 1).join("&#9673;");
+      return $('.statusbar .points').html(point_string);
     };
 
     return Player;
@@ -677,9 +667,7 @@
     }
 
     Product.prototype.activate = function() {
-      return pycon.transaction('item_activated', {
-        item_name: this.name
-      });
+      return true;
     };
 
     return Product;
@@ -694,6 +682,13 @@
       return _ref2;
     }
 
+    Bandage.prototype.activate = function() {
+      if (this.amount > 0) {
+        player.giveHealth(35);
+        return this.amount -= 1;
+      }
+    };
+
     return Bandage;
 
   })(Product);
@@ -705,6 +700,12 @@
       _ref3 = Food.__super__.constructor.apply(this, arguments);
       return _ref3;
     }
+
+    Food.prototype.activate = function() {
+      if (this.amount > 0) {
+        return player.giveFood(10);
+      }
+    };
 
     return Food;
 
@@ -756,7 +757,7 @@
     TestSuite.prototype._run_next_test = function() {
       var err, name, test;
 
-      name = this.test_keys.shift();
+      name = this.test_keys.pop();
       if (name == null) {
         console.log("All tests passed.");
         this.dom_element.after("<h1>All tests passed.</h1>");
@@ -767,12 +768,12 @@
       console.log("Running test '" + name + "'...");
       try {
         if (!test(new TestDelegate(this))) {
-          throw "test '" + name + "' returned invalid value";
+          throw "failure";
         }
       } catch (_error) {
         err = _error;
         this.failed = true;
-        console.warn("Test '" + name + "' failed with error '" + err + "'");
+        console.warn("Test '" + name + "' failed with error " + err);
         throw "Test suite ended due to failed test.";
       }
     };
@@ -833,49 +834,17 @@
       };
       return true;
     },
-    'Start socket, and observe stage_begin': function(t) {
+    'Start socket, and start game': function(t) {
       window.socket = new WebSocket("ws://" + location.host + "/json");
-      socket.onopen = function() {
+      return socket.onopen = function() {
         window.pycon = new PyAPI(window.socket);
-        pycon.register_for_event('stage_begin', function(data, responder) {
+        return pycon.register_for_event('stage_begin', function(data, responder) {
           responder.respond();
-          return setTimeout(function() {
-            return t.pass();
-          }, 250);
+          return t.pass();
         });
-        return window.go();
       };
-      return true;
     },
-    'Test: update_player_info': function(t) {
-      var m;
-
-      m = {
-        method: 'update_player_info',
-        args: {
-          inventory: {
-            bandage: Math.round(Math.random() * 100),
-            food: Math.round(Math.random() * 100),
-            bullet: Math.round(Math.random() * 100),
-            log: Math.round(Math.random() * 100)
-          },
-          condition: {
-            health: Math.round(Math.random() * 100),
-            antihunger: Math.round(Math.random() * 100)
-          }
-        }
-      };
-      pycon.onmessage({
-        data: JSON.stringify(m)
-      });
-      assert(player.products.bandage.amount === m.args.inventory.bandage, "Failed inventory update");
-      assert(player.products.food.amount === m.args.inventory.food, "Failed inventory update");
-      assert(player.products.bullet.amount === m.args.inventory.bullet, "Failed inventory update");
-      assert(player.products.log.amount === m.args.inventory.log, "Failed inventory update");
-      assert(player.health === m.args.condition.health, "Failed condition:health update");
-      assert(player.food === m.args.condition.antihunger, "Failed condition:antihunger update");
-      return t.pass();
-    }
+    '': ''
   };
 
   window.TradingStage = (function(_super) {
@@ -888,9 +857,10 @@
       this.type = 'TradingStage';
       this.timers = [];
       $('.tradingstage-interface').show();
-      player.update();
       $('.health').show();
       $('.hunger').show();
+      player.giveFood(0);
+      player.giveHealth(0);
       this.products = {};
       $('.tradingstage-interface .box').each(function() {
         var type;
@@ -1025,7 +995,9 @@
       _ref6 = data.items;
       for (name in _ref6) {
         amount = _ref6[name];
-        if (this.products[name] != null) {
+        if (name === 'gold') {
+          player.giveGold(amount);
+        } else if (this.products[name] != null) {
           this.products[name].for_trade = amount;
           this.products[name].needsRefresh.call(this.products[name]);
         }
@@ -1047,11 +1019,6 @@
 
     TradingStage.prototype.products_updated = function() {
       return this.price_updated();
-    };
-
-    TradingStage.prototype.update = function() {
-      this.price_updated();
-      return this.refreshTradingPlatform();
     };
 
     TradingStage.prototype.refreshTradingPlatform = function() {

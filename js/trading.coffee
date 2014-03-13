@@ -8,11 +8,10 @@ class window.TradingStage extends Stage
 		@timers = []
 
 		$('.tradingstage-interface').show()
+		player.update()
 
 		$('.health').show()
 		$('.hunger').show()
-		player.giveFood 0
-		player.giveHealth 0
 		# Register all of the trading products boxes. They are instances
 		# of the class TradingProduct, which handles the visual behavior
 		# of the trading boxes. They are connected to the player's set of
@@ -142,9 +141,7 @@ class window.TradingStage extends Stage
 
 		# Enter in the new data which was received during the trade.
 		for name,amount of data.items
-			if name == 'gold'
-				player.giveGold amount
-			else if @products[name]?
+			if @products[name]?
 				@products[name].for_trade = amount
 				@products[name].needsRefresh.call @products[name]
 
@@ -157,6 +154,10 @@ class window.TradingStage extends Stage
 
 	products_updated: ->
 		@price_updated()
+
+	update: ->
+		@price_updated()
+		@refreshTradingPlatform()
 
 	# This is called whenever there is some stale data relating to the trading
 	# panel. This function will update the trading panel to have the new data.

@@ -16,7 +16,7 @@ catch error
 
 # Prevent actual execution of the script
 # when in testing mode.
-if typeof TEST != 'undefined' and TEST == yes
+if TEST? and TEST == yes 
 	$ ->
 		console.log "Initializing testing mode."
 		t = new TestSuite()
@@ -34,7 +34,6 @@ else # Initialization of everything.
 	 	socket.onopen = ->
 	 		console.log "Socket connection opened successfully."
 	 		window.pycon = new PyAPI window.socket
-
 	 		window.go()
 	 		
 	 	# Since the socket should never close, this is always unexpected.
@@ -67,8 +66,24 @@ window.go = ->
 		else
 			throw "Illegal stage sent: #{data.stageType}"
 
-		# Inform them that they don't need our help.
+		#  Tell the server that we have loaded the stage.
 		responder.respond()
+
+	# The 'update_player_info' method updates the inventory and 
+	# status of the player.
+	pycon.register_for_event 'update_player_info', (data) ->
+		# Load up all of the data.
+		for name,amount of data.inventory
+			player.products[name].amount = amount
+
+		# Set the condition
+		if data.condition?
+			player.setHealth(data.condition.health) if data.condition.health?
+			player.setFood(data.condition.antihunger) if data.condition.antihunger?
+
+		# Tell the stage to update
+		stage.update()
+		window.updateInterface()
 
 	# When a trade is found to be completed with somebody, then we
 	# need to inform the current stage so that it can do what it likes

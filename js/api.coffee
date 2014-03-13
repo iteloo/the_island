@@ -33,7 +33,7 @@ class @PyAPI
 		# If the mssage has a transaction ID, and there is a callback
 		message = JSON.parse message.data
 		if !message.method?
-			throw "Received illegal message without method header."
+			throw "Received illegal message '#{JSON.stringify message}' without method header."
 		else if message.method == "handle_callback"
 			if !@response_handlers[ message.args.callback_id ]?
 				throw "Received illegal callback ID in a handle_callback response."
@@ -96,6 +96,12 @@ class @PyAPI
 	 	# asynchronous so we don't wait)
 		@socket.send( JSON.stringify transmission )
 		console.log 'Transaction sent: ', JSON.stringify(transmission)
+
+	# This function closes and opens the socket connection, which 
+	# "re-jiggles" the connection and starts things over. 
+	reconnectWithSocket: (new_socket) ->
+		@socket.close()
+		@socket = new_socket
 
 # This is the responder object. Event handlers will receive an instance
 # of this object, which they can use to make a repsonse. It is intended

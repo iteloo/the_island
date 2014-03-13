@@ -6,22 +6,17 @@ class window.Player
 		# Initialize the production facilities
 		@products = []
 		@health = 100
-		@food 	= 75
+		@food 	= 100
 		@productionfacilities = []
-		for p in [ 'bandage', 'food', 'bullet', 'point' ]
+		for p in [ 'bandage', 'food', 'bullet', 'log' ]
 			@products[p] = new Product(p)
 
 		@products['bandage'].color 		= '#DD514C'
 		@products['food'].color 		= '#5EB95E'
 		@products['bullet'].color 		= '#777'
-		@products['point'].color 		= '#FAD232'
-
-		@cards = []
+		@products['log'].color 			= '#FAD232'
 
 		yes
-
-	points: ->
-		return @products['point'].amount
 
 	getInventoryCount: ->
 		inventory = {}
@@ -29,29 +24,27 @@ class window.Player
 			inventory[name] = p.amount
 		return inventory
 
-	giveHealth: (amount) ->
-		if (@health + amount) < 100
-			@health += amount
+	update: ->
+		@setHealth @health
+		@setFood @food
+
+	setHealth: (amount) ->
+		if (amount) < 100
+			@health = amount
 		else 
 			@health = 100
 		health_points = Math.ceil(@health / 34.0)
 		health_string = Array(health_points+1).join("&#9829;") + Array(4-health_points).join("&#9825;")
 		$('.statusbar .health').html health_string
 
-	giveFood: (amount) ->
-		if (@food + amount) < 100
-			@food += amount
+	setFood: (amount) ->
+		if amount < 100
+			@food = amount
 		else 
 			@food = 100
 		food_points = Math.ceil(@food / 33.0)
 		food_string = Array(food_points+1).join("<span class='food'>&nbsp;&nbsp;&nbsp;</span>") + Array(3-food_points+1).join("<span class='anti food'>&nbsp;&nbsp;&nbsp;</span>")
 		$('.statusbar .hunger').html food_string
-
-	givePoints: (amount) ->
-		@products['point'].amount += amount
-		point_string = Array(@products['point'].amount+1).join("&#9673;")
-		$('.statusbar .points').html point_string 
-
 
 class window.Product
 	constructor: (@name) ->
@@ -60,18 +53,12 @@ class window.Product
 		yes
 
 	activate: ->
-		yes
+		# Tell the server that we activated the item.
+		pycon.transaction 'item_activated', { item_name: @name }
 
 class window.Bandage extends Product
-	activate: ->
-		if @amount > 0
-			player.giveHealth 35
-			@amount -= 1
 
 class window.Food extends Product
-	activate: ->
-		if @amount > 0
-			player.giveFood 10
 
 class window.Job
 	constructor: (@title, @color) ->

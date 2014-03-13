@@ -19,8 +19,11 @@ $ ->
 		location.reload true
 
 window.updateStatusBar = ->
-	# Push the current amount of gold to the status bar.
-	$('.money').html player.gold + window.config.gold
+	window.updateInterface()
+
+window.updateInterface = ->
+	if this.stage? 
+		this.stage.update()
 
 window.updateCountdown = ->
 	# Write in the time.
