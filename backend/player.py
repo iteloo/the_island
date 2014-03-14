@@ -88,7 +88,6 @@ class Player(message.MessageDelegate):
 
     ### messageDelegate methods ###
 
-    @helpers.logging()
     def on_open(self):
         # join the only game for now
         self.join_game(game_controller.GameController.staticGame)

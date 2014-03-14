@@ -16,7 +16,7 @@ catch error
 
 # Prevent actual execution of the script
 # when in testing mode.
-if TEST == yes
+if typeof TEST != 'undefined' and TEST == yes
 	$ ->
 		console.log "Initializing testing mode."
 		t = new TestSuite()
