@@ -39,7 +39,17 @@ to start the server on the default port 8888. If you would like the coffeescript
 
 ## Running the test suites
 
-JS/client-based test suite:
+### Python/server-based test suites:
+
+In the project directory, run
+
+     python -m unittest
+     
+To produce verbose output, run
+
+     python -m unittest discover -v
+
+### JS/client-based test suite:
 
 1. Start the server.
 2. Access `http://localhost:PORT/test`.
