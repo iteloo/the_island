@@ -1,68 +1,55 @@
-	_____ _   _  _____   _____ _____ _       ___   _   _______  
-	|_   _| | | ||  ___| |_   _/  ___| |     / _ \ | \ | |  _  \ 
-  	| | | |_| || |__     | | \ `--.| |    / /_\ \|  \| | | | | 
-  	| | |  _  ||  __|    | |  `--. \ |    |  _  || . ` | | | | 
-  	| | | | | || |___   _| |_/\__/ / |____| | | || |\  | |/ /  
-  	\_/ \_| |_/\____/   \___/\____/\_____/\_| |_/\_| \_/___/   
-	
-- 			 version  	:	0
--			 author 	:	Colin Merkel + Leo Hsu
+     _____ _   _  _____   _____ _____ _       ___   _   _______ 
+    |_   _| | | ||  ___| |_   _/  ___| |     / _ \ | \ | |  _  \
+      | | | |_| || |__     | | \ `--.| |    / /_\ \|  \| | | | |
+      | | |  _  ||  __|    | |  `--. \ |    |  _  || . ` | | | |
+      | | | | | || |___   _| |_/\__/ / |____| | | || |\  | |/ / 
+      \_/ \_| |_/\____/   \___/\____/\_____/\_| |_/\_| \_/___/  
+                                                            
+                                                            
+- version  : 0
+- author : Colin Merkel + Leo Hsu
 
-----------------------------------------------------
-WHAT IS THIS THING?
-----------------------------------------------------
+
+## What is this thing?
 
 I do not know.
 
-----------------------------------------------------
-SETUP AND CONFIGURATION BEFORE RUNNING
-----------------------------------------------------
+## Setup and starting the server
 
-You need to first the project dependencies. We recommend using `virtualenvwrapper`
+You need to first install the project dependencies. We recommend using virtualenvwrapper: 
 
-1. Install `python 3.3` and `pip`
-2. Install `virtualenvwrapper` using `pip`:
-    `pip install virtualenvwrapper`
-3. Setup a virtualenv:
-    `mkvirtualenv the_island`
-3. Inside the virtualenv, install all project dependencies:
-    `pip install -r requirements.txt`
+1. Install Python 3.3 and pip
+1. Install virtualenvwrapper using pip:
 
-Finally, edit the configurations:
+        pip install virtualenvwrapper
 
-4. Edit the configuration parameters in `configuration.json`
-5. Edit the configuration parameters in `backend/server.py`
+1. Setup a virtualenv:
 
-----------------------------------------------------
-ADDING GIT ATTRIBUTE FILTER
-----------------------------------------------------
+        mkvirtualenv the_island
 
-To automate the editing of configuration.json when pushing to and pulling from the server, add the following code to your .git/config file, replacing <<host>> and <<port>> with the appropriate values:
+1. Inside the virtualenv, install all project dependencies:
 
-[filter "config"]
-	clean = sed -e 's/<<host>>:<<port>>/HOST_IP_HERE/'
-	smudge = sed -e 's/HOST_IP_HERE/<<host>>:<<port>>/'
-	required
+        pip install -r requirements.txt
 
-For this to work, you must also keep the .gitattributes file in the top level of this repo. 
+To start the server using Foreman, follow [these instructions](https://github.com/iteloo/the_island/wiki/Developing-using-Heroku). If for some reason you do not want to use Foreman, simply run
 
-----------------------------------------------------
-RUNNING THE TEST SUITE(S)
-----------------------------------------------------
+    python runserver.py
+    
+to start the server on the default port 8888. If you would like the coffeescript to be compiled before the server starts, add a `-c` option. 
+
+## Running the test suites
 
 JS/client-based test suite:
 
 1. Start the server.
-2. Access "http://localhost:PORT/test".
+2. Access `http://localhost:PORT/test`.
 
-----------------------------------------------------
-COMPILING THE COFFEESCRIPT
-you need a coffeescript compiler (e.g. node.js) to 
-turn coffeescript into Javascript.
-----------------------------------------------------
+## Compiling the coffeescript manually
 
-The preferred coffeescript compile routing is to move into the code directory, then run
+If you would like to compile the coffeescript into javascript without running the server, you can manually do so using a coffeescript compiler (e.g. node.js). 
 
-coffee -wc --join assets/main.js js
+In the project directory, run
 
-which will compile all of the files together into the main.js Javascript file.
+    coffee --compile --join main.js js
+
+which will compile all of the files together into the `main.js` Javascript file. Add a `-w` option to automatically recompile when the source is updated. 
