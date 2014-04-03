@@ -17,16 +17,28 @@ class window.TradingStage extends Stage
 		# of the trading boxes. They are connected to the player's set of
 		# products.
 		@products = {}
-		$('.tradingstage-interface .box').each ->
+		$('.tradingstage-interface .trading span.tradecount').each ->
 			type = $(@).attr('data-production-type')
-			$(@).css('background-color',player.products[type].color)
+			$(@).children('.block').css('background-color',player.products[type].color)
 			me.products[type] = new TradingProduct( $(@), player.products[type] )
+			me.products[type].product.amount = 10
+			me.products[type].for_trade = 10
+			me.products[type].product.needsRefresh()
+			me.refreshTradingPlatform()
+
+		setTimeout( =>
+			for p in @products
+				p.product.needsRefresh()
+			@refreshTradingPlatform() 
+		,300)
+
+		
 
 		# Create a sortable with the trading objects. This sortable is not actually sortable
 		# (because when sorting completes, see the "stop" event, the thing is cancelled) but
 		# when the sorting is over, if the player has moved the placeholder around the screen
 		# then we consider that to be an action of either trading or selling.
-		$('.tradingstage-interface .inventory').sortable { 
+		$('.inventory').sortable { 
 				# The helper is a pop-up that appears while you are dragging the product around
 				# the screen. It is created when sorting starts and destroyed when sorting ends.
 				helper: (e, ui) ->
@@ -74,6 +86,13 @@ class window.TradingStage extends Stage
 
 		# Set up the trading window to show all of the appropriate things:
 		$('.tradingstage-interface .trading span.tradecount').each ->
+			$(@).html "<span class='block'>&#9632;</span> x <span class='count'>0</span>"
+			type = $(@).attr('data-production-type')
+			color = player.products[type].color
+			$(@).children('.block').css('color',color)
+			$(@).hide()
+
+		$('.inventory span.inventorycount').each ->
 			$(@).html "<span class='block'>&#9632;</span> x <span class='count'>0</span>"
 			type = $(@).attr('data-production-type')
 			color = player.products[type].color
@@ -230,7 +249,4 @@ class window.TradingProduct
 		yes
 
 	needsRefresh: ->
-		# The two fields that require refreshing are:
-		# 	1. The quantity of the product
-		# 	2. The price of the product
-		@dom_element.children('.amount').html @product.amount
+		yes

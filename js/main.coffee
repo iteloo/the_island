@@ -121,3 +121,6 @@ window.go = ->
 		stage.report_production() if stage.report_production?
 
 	updateStatusBar()
+
+	$('.inventory-button').click ->
+		$('.inventory').toggle()
