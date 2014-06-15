@@ -1,12 +1,14 @@
 from backend import message
 from backend import game_controller
 from backend import helpers
+from backend import game
 
 import collections
 
 
 class Player(message.MessageDelegate):
     _currentId = 0
+    conditions = ['health', 'antihunger']
 
     def __init__(self, *args, **kwargs):
         # call super
@@ -21,6 +23,8 @@ class Player(message.MessageDelegate):
 
         # game state vars
         self.current_job = None
+        self._inventory = dict((r, 0) for r in game.Game.resources)
+        self._condition = dict(zip(Player.conditions, ['3','2']))
 
     def __str__(self):
         return "Player%d" % self.id
@@ -86,11 +90,42 @@ class Player(message.MessageDelegate):
     def display_event(self, title: str, image_name: str, text: str, responses: list, callback: collections.Callable) -> None:
         pass
 
+    ### operational methods
+
+    @property
+    def inventory(self):
+        return self._inventory
+
+    @inventory.setter
+    def inventory(self, value):
+        self._inventory = value
+        self.update_player_info(self._inventory, self._condition)
+
+    @property
+    def condition(self):
+        return self._condition
+
+    @condition.setter
+    def condition(self, value):
+        self._condition = value
+        self.update_player_info(self._inventory, self._condition)
+
+    def addInventory(self, items):
+        self.inventory = dict((r, self.inventory[r] + count) for r, count in items.items())
+
+
+    def subtractInventory(self, items):
+        self.inventory = dict((r, self.inventory[r] - count) for r, count in items.items())
+
     ### messageDelegate methods ###
 
     def on_open(self):
         # join the only game for now
         self.join_game(game_controller.GameController.staticGame)
+
+        # hack: initiate first update
+        self.inventory = self.inventory
+        self.condition = self.condition
 
     def on_close(self):
         # quit game

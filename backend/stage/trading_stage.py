@@ -20,9 +20,15 @@ class TradingStage(ready_stage.ReadyStage):
 
         # if there is already a recorded proposal with similar time, then facilitate trading
         if self._last_recorded_proposal and new_proposal.close_to(self._last_recorded_proposal):
-            # send items to respective players
+            # send items to respective players through callback
             new_proposal.callback(items=self._last_recorded_proposal.items)
             self._last_recorded_proposal.callback(items=new_proposal.items)
+
+            # update inventory (will result in call to update in client, which must come AFTER invoking callback to proposed trade
+            new_proposal.player.subtractInventory(new_proposal.items)
+            new_proposal.player.addInventory(self._last_recorded_proposal.items)
+            self._last_recorded_proposal.player.subtractInventory(self._last_recorded_proposal.items)
+            self._last_recorded_proposal.player.addInventory(new_proposal.items)
 
         # otherwise, record as first
         else:
