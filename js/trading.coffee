@@ -126,15 +126,21 @@ class window.TradingStage extends Stage
 	# The bump function is called when the accelerometer detects a big
 	# change of acceleration. 
 	bump: ->
-		debugger;
 		# Assemble a list of items for the trade and ship them off
 		items = {}
 		for name,p of @products
 			if p.for_trade > 0
 				items[name] = p.for_trade
 
-		pycon.transaction 'trade_proposed', { items:items }, (r) ->
-			debugger;
+		pycon.transaction 'trade_proposed', { items:items }, (r) =>
+			for name, p of @products
+				p.for_trade = 0
+
+			for name, amount of r.items
+				@products[name].for_trade = amount
+
+			window.inventorypanel.needsRefresh()
+			@refreshTradingPlatform()
 
 	# When somebody clears out the trading panel (for some reason) then
 	# I'll refund whatever is in that panel to their list of things.

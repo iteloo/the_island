@@ -975,7 +975,6 @@
     };
 
     TradingStage.prototype.bump = function() {
-      debugger;
       var items, name, p, _ref;
       items = {};
       _ref = this.products;
@@ -987,9 +986,23 @@
       }
       return pycon.transaction('trade_proposed', {
         items: items
-      }, function(r) {
-        debugger;
-      });
+      }, (function(_this) {
+        return function(r) {
+          var amount, _ref1, _ref2;
+          _ref1 = _this.products;
+          for (name in _ref1) {
+            p = _ref1[name];
+            p.for_trade = 0;
+          }
+          _ref2 = r.items;
+          for (name in _ref2) {
+            amount = _ref2[name];
+            _this.products[name].for_trade = amount;
+          }
+          window.inventorypanel.needsRefresh();
+          return _this.refreshTradingPlatform();
+        };
+      })(this));
     };
 
     TradingStage.prototype.clearTrades = function() {
