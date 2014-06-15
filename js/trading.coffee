@@ -3,6 +3,7 @@
 
 class window.TradingStage extends Stage
 	constructor: ->
+		console.log "testing testing"
 		me = @
 		@type = 'TradingStage'
 		@timers = []
@@ -25,10 +26,12 @@ class window.TradingStage extends Stage
 			me.products[type].for_trade = 10
 			me.products[type].product.needsRefresh()
 			me.refreshTradingPlatform()
+			window.inventorypanel.needsRefresh()
 
 		setTimeout( =>
 			for p in @products
 				p.product.needsRefresh()
+			window.inventorypanel.needsRefresh()
 			@refreshTradingPlatform() 
 		,300)
 
@@ -73,11 +76,8 @@ class window.TradingStage extends Stage
 					#console.log 'moved to position: ', offset
 					# Find out which item we are actually moving
 					item = me.products[ ui.item.attr('data-production-type') ]
-					# Moving up corresponds to a "sell"
-					if offset > 100
-						item.sell.call item
 					# Moving down corresponds to a "trade"
-					else if offset < -100
+					if offset > 50
 						item.trade.call item
 					# It is very important that we cancel the sort in order to prevent things
 					# from getting re-ordered.
@@ -100,8 +100,8 @@ class window.TradingStage extends Stage
 			$(@).hide()
 
 		# Allow for clearing of the trading panel
-		$('.trading').on "taphold", ->
-			me.clearTrades.call me
+		$('.trading').on "taphold", =>
+			@clearTrades()
 
 		$('.countdown').show()
 
@@ -126,16 +126,15 @@ class window.TradingStage extends Stage
 	# The bump function is called when the accelerometer detects a big
 	# change of acceleration. 
 	bump: ->
+		debugger;
 		# Assemble a list of items for the trade and ship them off
 		items = {}
 		for name,p of @products
 			if p.for_trade > 0
 				items[name] = p.for_trade
 
-		items = card.on_trade_start.call(card,items) for card in player.cards
-
-		pycon.transaction {action: 'bump', data: { items:items } }, ->
-			yes
+		pycon.transaction 'trade_proposed', { items:items }, (r) ->
+			debugger;
 
 	# When somebody clears out the trading panel (for some reason) then
 	# I'll refund whatever is in that panel to their list of things.
@@ -147,6 +146,7 @@ class window.TradingStage extends Stage
 				p.needsRefresh.call p
 
 		@refreshTradingPlatform()
+		window.inventorypanel.needsRefresh()
 
 	# When a trade is finished (as judged by the server), it sends a message back
 	# to pycon, which then calls this function. 
@@ -177,6 +177,7 @@ class window.TradingStage extends Stage
 	update: ->
 		@price_updated()
 		@refreshTradingPlatform()
+		window.inventorypanel.needsRefresh()
 
 	# This is called whenever there is some stale data relating to the trading
 	# panel. This function will update the trading panel to have the new data.
@@ -240,6 +241,7 @@ class window.TradingProduct
 			@for_trade += 1
 			@product.amount -= 1
 			@needsRefresh()
+			window.inventorypanel.needsRefresh()
 			stage.refreshTradingPlatform.call stage
 			return yes
 		else 
