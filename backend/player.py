@@ -23,8 +23,8 @@ class Player(message.MessageDelegate):
 
         # game state vars
         self.current_job = None
-        self._inventory = dict((r, 0) for r in game.Game.resources)
-        self._condition = dict(zip(Player.conditions, ['3','2']))
+        self._inventory = dict((r, 4) for r in game.Game.resources)
+        self._condition = dict(zip(Player.conditions, [100, 100]))
 
     def __str__(self):
         return "Player%d" % self.id
@@ -111,11 +111,17 @@ class Player(message.MessageDelegate):
         self.update_player_info(self._inventory, self._condition)
 
     def addInventory(self, items):
-        self.inventory = dict((r, self.inventory[r] + count) for r, count in items.items())
-
+        for r, count in items.items():
+            self.inventory[r] += count
+        # hack: notify client
+        self.inventory = self.inventory
 
     def subtractInventory(self, items):
-        self.inventory = dict((r, self.inventory[r] - count) for r, count in items.items())
+        for r, count in items.items():
+            self.inventory[r] -= count
+        # hack: notify client
+        self.inventory = self.inventory
+
 
     ### messageDelegate methods ###
 

@@ -28,3 +28,19 @@ window.updateInterface = ->
 window.updateCountdown = ->
 	# Write in the time.
 	$('.countdown').html stage.time	
+
+class @InventoryPanel
+	constructor: () ->
+		@dom_element =  $('.inventory');
+		@button_element =  $('.inventory-button')
+		# Set up the clicking.
+		@button_element.click =>
+			@dom_element.toggle()
+
+		@needsRefresh()
+
+	needsRefresh: ->
+		if window.player?
+			for n,p of window.player.products
+				p.needsRefresh()
+		yes

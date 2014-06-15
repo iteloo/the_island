@@ -14,7 +14,7 @@ class window.Player
 		@products['bandage'].color 		= '#DD514C'
 		@products['food'].color 		= '#5EB95E'
 		@products['bullet'].color 		= '#777'
-		@products['log'].color 			= '#FAD232'
+		@products['log'].color 			= '#5E2605'
 
 		yes
 
@@ -56,9 +56,13 @@ class window.Product
 		# Tell the server that we activated the item.
 		pycon.transaction 'item_activated', { item_name: @name }
 
-class window.Bandage extends Product
-
-class window.Food extends Product
+	needsRefresh: ->
+		if @amount > 0
+			# Only show things that have non-zero values.
+			$(".inventory .inventorycount[data-production-type='#{@name}']").show().children('span.count').html @amount
+		else 
+			# Hide trading products that are zero.
+			$(".inventory .inventorycount[data-production-type='#{@name}']").hide()
 
 class window.Job
 	constructor: (@title, @color) ->
