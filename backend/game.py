@@ -1,10 +1,7 @@
 from backend import helpers
 from backend.stage import job_stage
-<<<<<<< HEAD
 from backend.stage import day_stage
-=======
 from backend.stage import trading_stage
->>>>>>> development
 
 
 class Game(object):
@@ -28,6 +25,7 @@ class Game(object):
 
     resources = ['log', 'food', 'bandage', 'bullet']
     jobs = ['production', 'farm', 'hospital', 'watchtower']
+    DEFAULT_DAMAGE = 5.0
 
     def __init__(self):
         self.players = []
@@ -38,6 +36,9 @@ class Game(object):
 
         # start the first stage
         self.next_stage()
+
+        # game state management variables
+        self.facility_condition = dict((facility, 1.0) for facility in Game.jobs)
 
     ### stage management ###
 
@@ -79,6 +80,12 @@ class Game(object):
 
         # begin new stage
         self.current_stage.begin()
+
+    ### facility management
+
+    def damage(facility, amount=DEFAULT_DAMAGE):
+        current_condition = self.facility_condition[facility]
+        self.facility_condition[facility] = max(current_condition - amount, 0.0)
 
     ### convenience ###
 

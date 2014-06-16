@@ -26,6 +26,9 @@ class Player(message.MessageDelegate):
         self._inventory = dict((r, 4) for r in game.Game.resources)
         self._condition = dict(zip(Player.conditions, [100, 100]))
 
+        # event management variable
+        self.event_queue = []
+
     def __str__(self):
         return "Player%d" % self.id
 
@@ -122,6 +125,13 @@ class Player(message.MessageDelegate):
         # hack: notify client
         self.inventory = self.inventory
 
+    ### event handling methods
+
+    def next_event(self):
+        if self.event_queue:
+            self.event_queue.pop().evoke()
+        else:
+            self.current_game.current_stage.ready(self)
 
     ### messageDelegate methods ###
 

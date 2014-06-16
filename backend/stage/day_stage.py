@@ -1,14 +1,30 @@
-from backend.stage import stage
+from backend.stage import ready_stage
+from backend.stage import event
 
 import math
 import random
 
 
-class DayStage(stage.Stage):
+class DayStage(ready_stage.ReadyStage):
     stage_type = 'Day'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        # load and invoke events
+        self.load_events()
+        
+        # start events
+        for p in self.game.players:
+            p.next_event()
+
+    ### event management
+
+    def load_events(self):
+        # determine sequence of events for each player, and load the sequence
+        # todo: incomplete
+        for player in self.game.players_with_job('watchtower'):
+            player.event_queue.append(AnimalAttackEvent(player))
 
     #### helpers ####
 
