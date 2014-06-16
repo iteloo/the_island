@@ -13,7 +13,8 @@ class DayStage(ready_stage.ReadyStage):
 
         # load and invoke events
         self.load_events()
-        
+
+    def after_begin(self):
         # start events
         for p in self.game.players:
             p.next_event()
@@ -24,7 +25,7 @@ class DayStage(ready_stage.ReadyStage):
         # determine sequence of events for each player, and load the sequence
         # todo: incomplete
         for player in self.game.players_with_job('watchtower'):
-            player.event_queue.append(AnimalAttackEvent(player))
+            player.event_queue.append(event.AnimalAttackEvent(player))
 
     #### helpers ####
 

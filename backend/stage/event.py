@@ -8,7 +8,7 @@ class Event():
         self.image_name = ""
         self.text = ""
         self.responses = []
-        self.player = ""
+        self.player = player
 
     def handle_response(self, response_chosen_id):
         self.player.next_event()
@@ -16,13 +16,14 @@ class Event():
     def evoke(self):
         self.player.display_event(title=self.title, image_name=self.image_name, text=self.text, responses=self.responses, callback=self.handle_response)
 
+
 class AnimalAttackEvent(Event):
 
     def __init__(self, *args, **kwargs):
-        super(Event, self).__init__(*args, **kwargs)
+        super(AnimalAttackEvent, self).__init__(*args, **kwargs)
 
         self.title = "A wild animal attacked!"
-        self.image_name = 'assets/owlbear.png'
+        self.image_name = 'assets/owlbear.jpeg'
         self.text = 'What are you going to doooo!?'
         self.responses = [
         {
@@ -36,11 +37,13 @@ class AnimalAttackEvent(Event):
         ]
 
     def handle_response(self, response_chosen_id):
-        if response_chosen_id is 'shoot':
+        if response_chosen_id == 'shoot':
             # client will need to check if enough bullets, maybe grey out option otherwise
             assert self.player.inventory['bullet'] > 0
             self.player.inventory['bullet'] -= 1
-        elif response_chosen_id is 'ignore':
+            # hack
+            self.player.inventory = self.player.inventory
+        elif response_chosen_id == 'ignore':
             self.game.damage('watchtower')
 
         super(AnimalAttackEvent, self).handle_response(response_chosen_id)

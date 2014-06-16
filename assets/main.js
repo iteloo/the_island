@@ -192,65 +192,6 @@
 
   })(PyAPIResponder);
 
-<<<<<<< HEAD
-=======
-  window.Stage = (function() {
-    function Stage() {
-      this.time = 0;
-      true;
-    }
-
-    Stage.prototype.bump = function() {
-      return true;
-    };
-
-    Stage.prototype.trade_complete = function() {
-      return true;
-    };
-
-    Stage.prototype.price_updated = function() {
-      return true;
-    };
-
-    Stage.prototype.timer_begin = function() {
-      return true;
-    };
-
-    Stage.prototype.end = function() {
-      return true;
-    };
-
-    Stage.prototype.new_bid = function() {
-      return true;
-    };
-
-    Stage.prototype.products_updated = function() {
-      return true;
-    };
-
-    Stage.prototype.update = function() {
-      return true;
-    };
-
-    return Stage;
-
-  })();
-
-  NotificationStage = (function(_super) {
-    __extends(NotificationStage, _super);
-
-    function NotificationStage() {
-      return NotificationStage.__super__.constructor.apply(this, arguments);
-    }
-
-    NotificationStage.prototype.end = function() {
-      return message.hide.call(message);
-    };
-
-    return NotificationStage;
-
-  })(Stage);
-
   window.DayStage = (function(_super) {
     __extends(DayStage, _super);
 
@@ -262,7 +203,6 @@
 
   })(Stage);
 
->>>>>>> development
   window.jevents = [];
 
   window.jevent = function(eventName, eventAction) {
@@ -615,14 +555,13 @@
       }
     });
     pycon.register_for_event('display_event', function(data, responder) {
+      var _this = this;
       window.message.display(data.title, data.text);
-      return window.message.onclose = (function(_this) {
-        return function() {
-          return responder.respond({
-            response_chosen_id: data.responses[0].id
-          });
-        };
-      })(this);
+      return window.message.onclose = function() {
+        return responder.respond({
+          response_chosen_id: data.responses[0].id
+        });
+      };
     });
     pycon.register_for_event('echo', function(data, responder) {
       return responder.respond(data);
@@ -645,13 +584,12 @@
 
   window.Message = (function() {
     function Message() {
+      var _this = this;
       this.dom_selector = '.message';
       this.timeout = 5;
-      this.onclose = (function(_this) {
-        return function() {
-          return true;
-        };
-      })(this);
+      this.onclose = function() {
+        return true;
+      };
     }
 
     Message.prototype.display = function(title, text, clickable, duration) {

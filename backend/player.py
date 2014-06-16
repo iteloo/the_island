@@ -129,7 +129,7 @@ class Player(message.MessageDelegate):
 
     def next_event(self):
         if self.event_queue:
-            self.event_queue.pop().evoke()
+            self.event_queue.pop(0).evoke()
         else:
             self.current_game.current_stage.ready(self)
 
