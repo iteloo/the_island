@@ -1,6 +1,10 @@
 from backend import helpers
 from backend.stage import job_stage
+<<<<<<< HEAD
 from backend.stage import day_stage
+=======
+from backend.stage import trading_stage
+>>>>>>> development
 
 
 class Game(object):

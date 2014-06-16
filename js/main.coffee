@@ -16,7 +16,7 @@ catch error
 
 # Prevent actual execution of the script
 # when in testing mode.
-if typeof TEST != 'undefined' and TEST == yes
+if TEST? and TEST == yes 
 	$ ->
 		console.log "Initializing testing mode."
 		t = new TestSuite()
@@ -34,7 +34,6 @@ else # Initialization of everything.
 	 	socket.onopen = ->
 	 		console.log "Socket connection opened successfully."
 	 		window.pycon = new PyAPI window.socket
-
 	 		window.go()
 	 		
 	 	# Since the socket should never close, this is always unexpected.
@@ -67,18 +66,29 @@ window.go = ->
 		else
 			throw "Illegal stage sent: #{data.stageType}"
 
-		# Inform them that they don't need our help.
+		#  Tell the server that we have loaded the stage.
 		responder.respond()
 
-	# When a trade is found to be completed with somebody, then we
-	# need to inform the current stage so that it can do what it likes
-	# with that information.
-	pycon.register_for_event 'TradeCompleted', (data) ->
-		if stage?
-			window.stage.trade_complete.call stage,data
-		else 
-			console.log 'Received illegal trade...?'
+	# The 'update_player_info' method updates the inventory and 
+	# status of the player.
+	pycon.register_for_event 'update_player_info', (data) ->
+		# Load up all of the data.
+		for name,amount of data.inventory
+			if window.stage instanceof TradingStage
+				player.products[name].amount = amount - window.stage.products[name].for_trade
+			else
+				player.products[name].amount = amount
 
+		# Set the condition
+		if data.condition?
+			player.setHealth(data.condition.health) if data.condition.health?
+			player.setFood(data.condition.antihunger) if data.condition.antihunger?
+
+		# Tell the stage to update
+		stage.update()
+		window.inventorypanel.needsRefresh()
+		window.updateInterface()
+		
 	# Is it possible
 	pycon.register_for_event 'DisplayMessage', (data) ->
 		data.clickable = yes if !data.clickable?
@@ -88,7 +98,7 @@ window.go = ->
 		pycon.transaction {action: data.callback, data: player.getInventoryCount.call player }
 
 	pycon.register_for_event 'update_job_selections', (data) ->
-		stage.update_job_selections.call(stage,data) if stage.update_job_selections?
+		stage.update_job_selections.call(stage,data) if stage.update_job_selections? 
 
 	pycon.register_for_event 'echo', (data, responder) ->
 		responder.respond(data)
@@ -106,3 +116,5 @@ window.go = ->
 		stage.report_production() if stage.report_production?
 
 	updateStatusBar()
+
+	window.inventorypanel = new InventoryPanel()

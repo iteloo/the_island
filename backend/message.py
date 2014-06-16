@@ -56,7 +56,7 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
     def on_message(self, message):
 
         # logging
-        helpers.cprint("==> Received message from client: ", helpers.LColor.INCOMING)
+        helpers.cprint("==> Received message from %s: " % self.delegate, helpers.LColor.INCOMING)
         print(message)
 
         # All messages will follow the format described in https://github.com/iteloo/the_island/wiki/Server-client-interface
@@ -107,7 +107,7 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
 
     def write_message(self, message, binary=False):
         # logging
-        helpers.cprint("==> Sending message to client: ", helpers.LColor.OUTGOING)
+        helpers.cprint("==> Sending message to %s: " % self.delegate, helpers.LColor.OUTGOING)
         print(message)
         # call original
         super().write_message(message, binary)

@@ -3,31 +3,43 @@
 
 class window.TradingStage extends Stage
 	constructor: ->
+		console.log "testing testing"
 		me = @
 		@type = 'TradingStage'
 		@timers = []
 
 		$('.tradingstage-interface').show()
+		player.update()
 
 		$('.health').show()
 		$('.hunger').show()
-		player.giveFood 0
-		player.giveHealth 0
 		# Register all of the trading products boxes. They are instances
 		# of the class TradingProduct, which handles the visual behavior
 		# of the trading boxes. They are connected to the player's set of
 		# products.
 		@products = {}
-		$('.tradingstage-interface .box').each ->
+		$('.tradingstage-interface .trading span.tradecount').each ->
 			type = $(@).attr('data-production-type')
-			$(@).css('background-color',player.products[type].color)
+			$(@).children('.block').css('background-color',player.products[type].color)
 			me.products[type] = new TradingProduct( $(@), player.products[type] )
+			me.products[type].product.needsRefresh()
+			me.refreshTradingPlatform()
+			window.inventorypanel.needsRefresh()
+
+		setTimeout( =>
+			for p in @products
+				p.product.needsRefresh()
+			window.inventorypanel.needsRefresh()
+			@refreshTradingPlatform() 
+		,300)
+
+		
 
 		# Create a sortable with the trading objects. This sortable is not actually sortable
 		# (because when sorting completes, see the "stop" event, the thing is cancelled) but
 		# when the sorting is over, if the player has moved the placeholder around the screen
 		# then we consider that to be an action of either trading or selling.
-		$('.tradingstage-interface .inventory').sortable { 
+		$('.inventory').sortable { 
 				# The helper is a pop-up that appears while you are dragging the product around
 				# the screen. It is created when sorting starts and destroyed when sorting ends.
 				helper: (e, ui) ->
@@ -62,11 +74,8 @@ class window.TradingStage extends Stage
 					#console.log 'moved to position: ', offset
 					# Find out which item we are actually moving
 					item = me.products[ ui.item.attr('data-production-type') ]
-					# Moving up corresponds to a "sell"
-					if offset > 100
-						item.sell.call item
 					# Moving down corresponds to a "trade"
-					else if offset < -100
+					if offset > 50
 						item.trade.call item
 					# It is very important that we cancel the sort in order to prevent things
 					# from getting re-ordered.
@@ -81,9 +90,16 @@ class window.TradingStage extends Stage
 			$(@).children('.block').css('color',color)
 			$(@).hide()
 
+		$('.inventory span.inventorycount').each ->
+			$(@).html "<span class='block'>&#9632;</span> x <span class='count'>0</span>"
+			type = $(@).attr('data-production-type')
+			color = player.products[type].color
+			$(@).children('.block').css('color',color)
+			$(@).hide()
+
 		# Allow for clearing of the trading panel
-		$('.trading').on "taphold", ->
-			me.clearTrades.call me
+		$('.trading').on "taphold", =>
+			@clearTrades()
 
 		$('.countdown').show()
 
@@ -114,10 +130,15 @@ class window.TradingStage extends Stage
 			if p.for_trade > 0
 				items[name] = p.for_trade
 
-		items = card.on_trade_start.call(card,items) for card in player.cards
+		pycon.transaction 'trade_proposed', { items:items }, (r) =>
+			for name, p of @products
+				p.for_trade = 0
 
-		pycon.transaction {action: 'bump', data: { items:items } }, ->
-			yes
+			for name, amount of r.items
+				@products[name].for_trade = amount
+
+			window.inventorypanel.needsRefresh()
+			@refreshTradingPlatform()
 
 	# When somebody clears out the trading panel (for some reason) then
 	# I'll refund whatever is in that panel to their list of things.
@@ -129,6 +150,7 @@ class window.TradingStage extends Stage
 				p.needsRefresh.call p
 
 		@refreshTradingPlatform()
+		window.inventorypanel.needsRefresh()
 
 	# When a trade is finished (as judged by the server), it sends a message back
 	# to pycon, which then calls this function. 
@@ -142,9 +164,7 @@ class window.TradingStage extends Stage
 
 		# Enter in the new data which was received during the trade.
 		for name,amount of data.items
-			if name == 'gold'
-				player.giveGold amount
-			else if @products[name]?
+			if @products[name]?
 				@products[name].for_trade = amount
 				@products[name].needsRefresh.call @products[name]
 
@@ -157,6 +177,11 @@ class window.TradingStage extends Stage
 
 	products_updated: ->
 		@price_updated()
+
+	update: ->
+		@price_updated()
+		@refreshTradingPlatform()
+		window.inventorypanel.needsRefresh()
 
 	# This is called whenever there is some stale data relating to the trading
 	# panel. This function will update the trading panel to have the new data.
@@ -220,6 +245,7 @@ class window.TradingProduct
 			@for_trade += 1
 			@product.amount -= 1
 			@needsRefresh()
+			window.inventorypanel.needsRefresh()
 			stage.refreshTradingPlatform.call stage
 			return yes
 		else 
@@ -229,7 +255,4 @@ class window.TradingProduct
 		yes
 
 	needsRefresh: ->
-		# The two fields that require refreshing are:
-		# 	1. The quantity of the product
-		# 	2. The price of the product
-		@dom_element.children('.amount').html @product.amount
+		yes
