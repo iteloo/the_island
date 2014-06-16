@@ -5,6 +5,8 @@ class window.Message
 	constructor: ->
 		@dom_selector = '.message'
 		@timeout = 5
+		@onclose = =>
+			yes
 
 	display: (title,text,clickable=true,duration=null) ->
 		me = @
@@ -28,6 +30,7 @@ class window.Message
 			,duration*1000)
 
 	hide: ->
+		@onclose()
 		$(@dom_selector).unbind()
 		$(@dom_selector).hide()
 		$('.overlay').hide()
