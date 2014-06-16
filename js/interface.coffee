@@ -19,9 +19,28 @@ $ ->
 		location.reload true
 
 window.updateStatusBar = ->
-	# Push the current amount of gold to the status bar.
-	$('.money').html player.gold + window.config.gold
+	window.updateInterface()
+
+window.updateInterface = ->
+	if this.stage? 
+		this.stage.update()
 
 window.updateCountdown = ->
 	# Write in the time.
 	$('.countdown').html stage.time	
+
+class @InventoryPanel
+	constructor: () ->
+		@dom_element =  $('.inventory');
+		@button_element =  $('.inventory-button')
+		# Set up the clicking.
+		@button_element.click =>
+			@dom_element.toggle()
+
+		@needsRefresh()
+
+	needsRefresh: ->
+		if window.player?
+			for n,p of window.player.products
+				p.needsRefresh()
+		yes

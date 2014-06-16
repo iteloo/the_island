@@ -15,7 +15,7 @@ args = parser.parse_args()
 
 # compile coffeescript
 if args.c:
-    helpers.compile_coffeescript('js', 'main.js')
+    helpers.compile_coffeescript('js', 'assets/main.js')
 
 # Convention over configuration dictates that we 
 # choose a default port in the case that the user 
