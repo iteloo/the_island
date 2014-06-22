@@ -154,7 +154,7 @@ class AnimalAttackEvent(Event):
 
     def should_happen(self):
         condition = self.player.current_game.facility_condition[self.facility]
-        risk = self.game.MAX_ANIMAL_ATTACK_RISK * (1 - condition) if self.facility is not 'watchtower' else 1.0
+        risk = self.game.MAX_ANIMAL_ATTACK_RISK * (1 - condition) if self.facility != 'watchtower' else 1.0
         return random.random() < risk
 
     def handle_response(self, response_chosen_id):
@@ -168,6 +168,8 @@ class AnimalAttackEvent(Event):
             # damage the facility the player is currently at
             self.player.current_game.damage(self.player.current_job, type='animal attack')
             # damage player health
-            self.player.health -= self.game.ANIMAL_ATTACK_HEALTH_DAMAGE
+            self.player.condition['health'] -= self.game.ANIMAL_ATTACK_HEALTH_DAMAGE
+            # hack
+            self.player.condition = self.player.condition
 
         super(AnimalAttackEvent, self).handle_response(response_chosen_id)

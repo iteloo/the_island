@@ -11,9 +11,9 @@ class Stage(object):
 
     def begin(self):
         for player in self.game.players:
-            player.stage_begin(stage_type=self.stage_type, callback=self.after_begin)
+            player.stage_begin(stage_type=self.stage_type, callback=player.after_begin)
 
-    def after_begin(self):
+    def after_begin(self, sender):
         pass
 
     def can_end(self):
@@ -23,7 +23,7 @@ class Stage(object):
         pass
 
     def handle_add_player(self, new_player):
-        new_player.stage_begin(stage_type=self.stage_type, callback=self.after_begin)
+        new_player.stage_begin(stage_type=self.stage_type, callback=new_player.after_begin)
 
     def handle_remove_player(self, player_removed):
         pass

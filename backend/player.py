@@ -51,6 +51,10 @@ class Player(message.MessageDelegate):
         from backend.server import RUN_DATE, VERSION
         callback(start_date=RUN_DATE, version=VERSION)
 
+    @message.forward('self.current_game.current_stage')
+    def after_begin(self) -> None:
+        pass
+
     @message.forward('self.current_game')
     def item_activated(self, item_name: str) -> None:
         pass
@@ -113,13 +117,13 @@ class Player(message.MessageDelegate):
         self._condition = value
         self.update_player_info(self._inventory, self._condition)
 
-    def addInventory(self, items):
+    def add_inventory(self, items):
         for r, count in items.items():
             self.inventory[r] += count
         # hack: notify client
         self.inventory = self.inventory
 
-    def subtractInventory(self, items):
+    def subtract_inventory(self, items):
         for r, count in items.items():
             self.inventory[r] -= count
         # hack: notify client
