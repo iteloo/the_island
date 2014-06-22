@@ -6,7 +6,7 @@ class window.Message
 		@dom_selector = '.message'
 		@timeout = 5
 
-	display: (title,text,clickable=true,duration=null) ->
+	display: (title,text,clickable=true,options={},duration=null) ->
 		me = @
 
 		$('.overlay').show()

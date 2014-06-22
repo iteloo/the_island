@@ -35,9 +35,20 @@ class @InventoryPanel
 		@button_element =  $('.inventory-button')
 		# Set up the clicking.
 		@button_element.click =>
-			@dom_element.toggle()
+			@toggle()
+
+		@close()
 
 		@needsRefresh()
+
+	open: ->
+		@dom_element.show()
+
+	close: ->
+		@dom_element.hide()
+
+	toggle: ->
+		@dom_element.toggle()
 
 	needsRefresh: ->
 		if window.player?
