@@ -6,8 +6,8 @@ class window.JobStage extends Stage
 
 		$('.ready').show()
 
-		$('.ready').tap ->
-			me.ready.call me
+		$('.ready').tap =>
+			@ready()
 
 		# Show the interface
 		$('.jobstage-interface').show()

@@ -42,8 +42,10 @@ class window.Player
 			@food = amount
 		else 
 			@food = 100
-		food_points = Math.ceil(@food / 33.0)
-		food_string = Array(food_points+1).join("<span class='food'>&nbsp;&nbsp;&nbsp;</span>") + Array(3-food_points+1).join("<span class='anti food'>&nbsp;&nbsp;&nbsp;</span>")
+		food_points = Math.ceil(@food / 50.0)
+		if @food < 10
+			food_points = 0
+		food_string = Array(food_points+1).join("<span class='food'>&nbsp;&nbsp;&nbsp;</span>") + Array(3-food_points).join("<span class='anti food'>&nbsp;&nbsp;&nbsp;</span>")
 		$('.statusbar .hunger').html food_string
 
 class window.Product
