@@ -60,6 +60,6 @@ If you would like to compile the coffeescript into javascript without running th
 
 In the project directory, run
 
-    coffee --compile --join main.js js
+    coffee -wc --join assets/main.js js
 
 which will compile all of the files together into the `main.js` Javascript file. Add a `-w` option to automatically recompile when the source is updated. 
