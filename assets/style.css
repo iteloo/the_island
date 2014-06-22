@@ -12,6 +12,10 @@ html,body {
 	font-size: 50pt;
 }
 
+span.antiheart {
+	opacity: 0.1;
+}
+
 .message-button {
 	font-size: 30pt;
 	box-shadow: 5px 5px 0px #000000;
