@@ -203,6 +203,17 @@
 
   })(Stage);
 
+  window.DayStage = (function(_super) {
+    __extends(DayStage, _super);
+
+    function DayStage() {
+      true;
+    }
+
+    return DayStage;
+
+  })(Stage);
+
   window.jevents = [];
 
   window.jevent = function(eventName, eventAction) {
