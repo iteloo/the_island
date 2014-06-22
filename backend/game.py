@@ -36,7 +36,7 @@ class Game(object):
         self.players = []
 
         # stage management variables
-        self.stage_queue = [job_stage.JobStage, day_stage.DayStage, trading_stage.TradingStage]
+        self.stage_queue = 2 * [job_stage.JobStage, day_stage.DayStage, trading_stage.TradingStage]
         self.current_stage = None
 
         # start the first stage
