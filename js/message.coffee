@@ -28,13 +28,14 @@ class window.Message
 		# Clear out the list of buttons
 		@dom_element.children('.message-buttons').html ''
 		if options? && options.length > 0
-			clickable = false
 			for o in options
-				@buttons.push new MessageButton(@, o.text, o.id)
+				if !o.display? || o.display == "button"
+					@buttons.push new MessageButton(@, o.text, o.id)
 		
 		# Now set up click events.
 		if clickable
 			$(@dom_selector).tap =>
+				@close()
 				@hide()
 
 		# If necessary, use a timeout.
@@ -45,6 +46,11 @@ class window.Message
 
 
 	respond: (response) ->
+		yes
+
+	# This is called when the message is clicked away. It is only possible
+	# when the message is clickable.
+	close: ->
 		yes
 
 	hide: ->
