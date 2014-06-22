@@ -34,7 +34,7 @@ class window.Player
 		else 
 			@health = 100
 		health_points = Math.ceil(@health / 34.0)
-		health_string = Array(health_points+1).join("&#9829;") + Array(4-health_points).join("<div class='antiheart'>&#9829;</div>")
+		health_string = Array(health_points+1).join("&#9829;") + Array(4-health_points).join("<span class='antiheart'>&#9829;</span>")
 		$('.statusbar .health').html health_string
 
 	setFood: (amount) ->
