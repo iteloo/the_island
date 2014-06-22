@@ -20,17 +20,79 @@ class Event():
         """override to use to decide if event happens (e.g. based on some risk or condition)"""
         return True
 
-    def handle_response(self, response_chosen_id):
-        self.end()
-
     def evoke(self):
         if self.should_happen():
             self.player.display_event(title=self.title, image_name=self.image_name, text=self.text, responses=self.responses, callback=self.handle_response)
         else:
             self.end()
 
+    def handle_response(self, response_chosen_id):
+        self.end()
+
     def end(self):
         self.player.next_event()
+
+
+class DismissibleEvent(Event):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.responses += [
+            {
+                'id': 'dismiss',
+                'display': 'background'
+            }
+        ]
+
+    def handle_response(self, response_chosen_id):
+        if response_chosen_id == 'dismiss':
+            pass
+        super().handle_response(response_chosen_id)
+
+
+class MessageEvent(DismissibleEvent):
+
+    def __init__(self, title="", text="", *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.title = title
+        self.text = text
+
+
+class FacilityRepairEvent(Event):
+
+    def __init__(self, player):
+        super().__init__(player)
+
+        self.text = 'The %s is looking %s. ' % (self.player.current_job, self.describe(self.game.facility_condition[self.facility]))
+        self.responses += [
+            {
+                'id': 'okay',
+                'text': 'Okay'
+            },
+            {
+                'id': 'repair',
+                'text': 'Repair (costs 1 log)'
+            }
+        ]
+
+    def handle_response(self, response_chosen_id):
+        if response_chosen_id == 'repair':
+            # client will need to check if enough log, maybe grey out option otherwise
+            assert self.player.inventory['log'] > 0
+            self.player.inventory['log'] -= 1
+            # hack
+            self.player.inventory = self.player.inventory
+
+            # repair facility
+            self.player.current_game.repair(self.facility)
+
+            # insert another repair event into player event queue
+            self.player.event_queue.insert(0, FacilityRepairEvent(self.player))
+        elif response_chosen_id == 'ignore':
+            # nothing happens
+            pass
+
+        super().handle_response(response_chosen_id)
 
     #### helpers ####
 
@@ -67,76 +129,30 @@ class Event():
                 adjectives[int(math.floor(number / 3.0))])
 
 
-class FacilityRepairEvent(Event):
+class ResourceHarvestEvent(DismissibleEvent):
+
     def __init__(self, player):
-        super(FacilityRepairEvent, self).__init__(player)
-
-        self.text = 'The %s is looking %s. ' % (self.player.current_job, self.describe(self.game.facility_condition[self.facility]))
-        self.responses = [
-            {
-                'id': 'repair',
-                'text': 'Repair (costs 1 log)'
-            },
-            {
-                'id': 'ignore',
-                'text': 'Ignore'
-            }
-        ]
-
-    def handle_response(self, response_chosen_id):
-        if response_chosen_id == 'repair':
-            # client will need to check if enough log, maybe grey out option otherwise
-            assert self.player.inventory['log'] > 0
-            self.player.inventory['log'] -= 1
-            # hack
-            self.player.inventory = self.player.inventory
-
-            # repair facility
-            self.player.current_game.repair(self.facility)
-
-            # insert another repair event into player event queue
-            self.player.event_queue.insert(0, FacilityRepairEvent(self.player))
-        elif response_chosen_id == 'ignore':
-            # nothing happens
-            pass
-
-        super(FacilityRepairEvent, self).handle_response(response_chosen_id)
-
-
-class ResourceHarvestEvent(Event):
-    def __init__(self, player):
-        super(ResourceHarvestEvent, self).__init__(player)
+        super().__init__(player)
 
         resource = self.player.current_game.resource_with_job(self.facility)
-        resource_yield = self.resource_yield()
-        self.text = 'You received %d more %s. ' % (self.resource_yield(), resource)
-        self.responses = [
-            {
-                'id': 'okay',
-                'text': 'Okay'
-            }
-        ]
+
+        # calculate resource yield
+        condition = self.player.current_game.facility_condition[self.facility]
+        resource_yield = math.ceil(condition * self.game.RESOURCE_HARVEST_YIELD_AT_FULL_CONDITION)
+
+        # configure message
+        self.text = 'You received %d more %s. ' % (resource_yield, resource)
 
         # give player resource
         self.player.inventory[resource] += resource_yield
         # hack
         self.player.inventory = self.player.inventory
 
-    def handle_response(self, response_chosen_id):
-        if response_chosen_id == 'okay':
-            # do nothing
-            pass
-
-        super(ResourceHarvestEvent, self).handle_response(response_chosen_id)
-
-    def resource_yield(self):
-        condition = self.player.current_game.facility_condition[self.facility]
-        return math.ceil(condition * self.game.RESOURCE_HARVEST_YIELD_AT_FULL_CONDITION)
-
 
 class AnimalAttackEvent(Event):
+
     def __init__(self, *args, **kwargs):
-        super(AnimalAttackEvent, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.title = "A wild animal attacked!"
         self.image_name = 'assets/owlbear.jpeg'
@@ -172,4 +188,4 @@ class AnimalAttackEvent(Event):
             # hack
             self.player.condition = self.player.condition
 
-        super(AnimalAttackEvent, self).handle_response(response_chosen_id)
+        super().handle_response(response_chosen_id)
