@@ -3,7 +3,8 @@
 
 class window.Message
 	constructor: ->
-		@dom_selector = '.message'
+		# Create the element
+		@dom_element = $("<div class='message'><h3 class='title'></h3><p class='text'></p><div class='message-buttons'></div></div>")		
 		@timeout = 5
 		@onclose = =>
 			yes
@@ -12,16 +13,16 @@ class window.Message
 	display: (title,text,clickable=true,options=[],duration=null) ->
 		me = @
 
+		$(".interface").append @dom_element
 		$('.overlay').show()
 
 		text = '' if !text? 
 		title = '' if !title?
 		
-		$(@dom_selector).children('.title').html title
-		$(@dom_selector).children('.text').html text
-		$(@dom_selector).show()
+		@dom_element.children('.title').html title
+		@dom_element.children('.text').html text
+		@dom_element.show()
 
-		@dom_element = $(@dom_selector)
 
 		# Now consider whether we need buttons.
 		@buttons = []
@@ -34,9 +35,10 @@ class window.Message
 		
 		# Now set up click events.
 		if clickable
-			$(@dom_selector).tap =>
+			@dom_element.tap =>
 				@close()
 				@hide()
+				@destroy
 
 		# If necessary, use a timeout.
 		if duration?
@@ -53,10 +55,13 @@ class window.Message
 	close: ->
 		yes
 
+	destroy: ->
+		@dom_element.remove()
+
 	hide: ->
 		@onclose()
-		$(@dom_selector).unbind()
-		$(@dom_selector).hide()
+		@dom_element.unbind()
+		@dom_element.hide()
 		$('.overlay').hide()
 
 # The message buttons are created whenever a message has button options.
@@ -74,6 +79,3 @@ class @MessageButton
 	click: ->
 		@parent.respond @id
 		@parent.hide()
-
-
-window.message = new Message()

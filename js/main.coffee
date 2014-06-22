@@ -23,23 +23,27 @@ if TEST? and TEST == yes
 		t.run()
 else # Initialization of everything.
 	$ ->
-	 	# First step: connect to the specified WebSocket
-	 	# server.
-	 	window.socket = new WebSocket("ws://" + location.host + "/json")
-	 	# Get ready for when the socket opens
-	 	window.jevent 'SocketOpened', ->
-			console.log 'The socket was opened.'
+		window.login_controller = new LoginController()
 
-	 	# This function is called only when the socket is opened. 
-	 	socket.onopen = ->
-	 		console.log "Socket connection opened successfully."
-	 		window.pycon = new PyAPI window.socket
-	 		window.go()
-	 		
-	 	# Since the socket should never close, this is always unexpected.
-	 	socket.onclose = ->
-	 		console.log "Socket connection was closed, unexpectedly."
-	 		window.message.display "Oh No!", "I don't know why, but the socket was closed (!)"
+window.connectToGame = ->
+ 	# First step: connect to the specified WebSocket
+ 	# server.
+ 	window.socket = new WebSocket("ws://" + location.host + "/json")
+ 	# Get ready for when the socket opens
+ 	window.jevent 'SocketOpened', ->
+		console.log 'The socket was opened.'
+
+ 	# This function is called only when the socket is opened. 
+ 	socket.onopen = ->
+ 		console.log "Socket connection opened successfully."
+ 		window.pycon = new PyAPI window.socket
+ 		window.go()
+ 		
+ 	# Since the socket should never close, this is always unexpected.
+ 	socket.onclose = ->
+ 		console.log "Socket connection was closed, unexpectedly."
+ 		m = new Message()
+ 		m.display "Oh No!", "I don't know why, but the socket was closed (!)"
 
 # When everything is loaded and ready to go, this function is called.
 window.go = ->
@@ -98,17 +102,19 @@ window.go = ->
 		if data.responses?
 			options = data.responses
 
+		m = new Message()
+
 		for o in options
 			if o.display? && o.display == "background"
-				message.close = =>
+				m.close = =>
 					responder.respond { response_chosen_id: o.id }
 				data.clickable = yes
 				break
 
-		message.respond = (response) =>
+		m.respond = (response) =>
 			responder.respond { response_chosen_id: response } 
 
-		message.display.call message,data.title, data.text, data.clickable, options
+		m.display data.title, data.text, data.clickable, options
 
 	pycon.register_for_event 'InventoryCountRequested', (data) ->
 		pycon.transaction {action: data.callback, data: player.getInventoryCount.call player }
