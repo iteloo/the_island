@@ -25,13 +25,18 @@ class Game(object):
 
     resources = ['log', 'food', 'bandage', 'bullet']
     jobs = ['production', 'farm', 'hospital', 'watchtower']
-    DEFAULT_DAMAGE = 5.0
+    FACILITY_DAMAGE_OF_TYPE = {'natural': .05, 'animal attack': .2}
+    FACILITY_REPAIR_PER_LOG = .05
+    DEFAULT_HEALTH_DAMAGE = 5.0
+    ANIMAL_ATTACK_HEALTH_DAMAGE = 35.0
+    RESOURCE_HARVEST_YIELD_AT_FULL_CONDITION = 3
+    MAX_ANIMAL_ATTACK_RISK = 1.0
 
     def __init__(self):
         self.players = []
 
         # stage management variables
-        self.stage_queue = [job_stage.JobStage, day_stage.DayStage, trading_stage.TradingStage]
+        self.stage_queue = 2 * [job_stage.JobStage, day_stage.DayStage, trading_stage.TradingStage]
         self.current_stage = None
 
         # start the first stage
@@ -83,9 +88,16 @@ class Game(object):
 
     ### facility management
 
-    def damage(facility, amount=DEFAULT_DAMAGE):
+    def damage(self, facility, amount=None, type='natural'):
+        # determine amount
+        if amount is None:
+            amount = self.FACILITY_DAMAGE_OF_TYPE[type]
         current_condition = self.facility_condition[facility]
         self.facility_condition[facility] = max(current_condition - amount, 0.0)
+
+    def repair(self, facility, amount=FACILITY_REPAIR_PER_LOG):
+        current_condition = self.facility_condition[facility]
+        self.facility_condition[facility] = min(current_condition + amount, 1.0)
 
     ### convenience ###
 

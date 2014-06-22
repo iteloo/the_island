@@ -25,10 +25,10 @@ class TradingStage(ready_stage.ReadyStage):
             self._last_recorded_proposal.callback(items=new_proposal.items)
 
             # update inventory (will result in call to update in client, which must come AFTER invoking callback to proposed trade
-            new_proposal.player.subtractInventory(new_proposal.items)
-            new_proposal.player.addInventory(self._last_recorded_proposal.items)
-            self._last_recorded_proposal.player.subtractInventory(self._last_recorded_proposal.items)
-            self._last_recorded_proposal.player.addInventory(new_proposal.items)
+            new_proposal.player.subtract_inventory(new_proposal.items)
+            new_proposal.player.add_inventory(self._last_recorded_proposal.items)
+            self._last_recorded_proposal.player.subtract_inventory(self._last_recorded_proposal.items)
+            self._last_recorded_proposal.player.add_inventory(new_proposal.items)
 
         # otherwise, record as first
         else:
