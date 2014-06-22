@@ -12,6 +12,8 @@ VERSION = '0'
 PORT = None
 RUN_DATE = None
 
+ioloop = None
+
 
 class DebugStaticFileHandler(tornado.web.StaticFileHandler):
     """Static file handler override class is used to force caching to be turned off for all static files, which is a debugging measure."""
@@ -39,4 +41,6 @@ def run(port):
     helpers.print_header("==> Starting server on port %d" % PORT)
 
     # start main event loop
-    tornado.ioloop.IOLoop.instance().start()
+    global ioloop
+    ioloop = tornado.ioloop.IOLoop.instance()
+    ioloop.start()

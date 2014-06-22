@@ -47,6 +47,10 @@ class Game(object):
 
     ### stage management ###
 
+    def stage_can_end(self, stage):
+        assert self.current_stage is stage
+        self.next_stage()
+
     def next_stage(self):
 
         # hack: keeping track of title stages

@@ -1,3 +1,5 @@
+from backend import server
+
 import math
 import random
 
@@ -30,7 +32,7 @@ class Event():
         self.end()
 
     def end(self):
-        self.player.next_event()
+        server.ioloop.add_callback(self.player.event_did_end, self)
 
 
 class DismissibleEvent(Event):
@@ -87,7 +89,7 @@ class FacilityRepairEvent(Event):
             self.player.current_game.repair(self.facility)
 
             # insert another repair event into player event queue
-            self.player.event_queue.insert(0, FacilityRepairEvent(self.player))
+            self.player.schedule_event(FacilityRepairEvent(self.player), immediately=True)
         elif response_chosen_id == 'ignore':
             # nothing happens
             pass
@@ -184,7 +186,8 @@ class AnimalAttackEvent(Event):
             # damage the facility the player is currently at
             self.player.current_game.damage(self.player.current_job, type='animal attack')
             # damage player health
-            self.player.condition['health'] -= self.game.ANIMAL_ATTACK_HEALTH_DAMAGE
+            new_health = max(self.player.condition['health'] - self.game.ANIMAL_ATTACK_HEALTH_DAMAGE, 0.0)
+            self.player.condition['health'] = new_health
             # hack
             self.player.condition = self.player.condition
 
