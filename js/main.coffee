@@ -93,7 +93,6 @@ window.go = ->
 		
 	# Is it possible
 	pycon.register_for_event 'display_event', (data, responder) ->
-		debugger;
 		data.clickable = yes if !data.clickable?
 		options = []
 		if data.responses?

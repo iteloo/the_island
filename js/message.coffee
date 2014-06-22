@@ -11,7 +11,6 @@ class window.Message
 	# An example of the options argument is something like: [ {text: "button text", callback: function() {} }, ... ]
 	display: (title,text,clickable=true,options=[],duration=null) ->
 		me = @
-		debugger;
 
 		$('.overlay').show()
 
