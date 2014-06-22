@@ -56,7 +56,7 @@ window.go = ->
 		if stage? 
 			window.stage.end()
 		if data.stage_type == 'Job'
-			window.stage = new JobStage()
+			window.stage = new JobStage() 
 		else if data.stage_type == 'Day'
 			window.stage = new DayStage()
 		else if data.stage_type == 'Production'
@@ -93,10 +93,17 @@ window.go = ->
 		
 	# Is it possible
 	pycon.register_for_event 'display_event', (data, responder) ->
-		data.clickable = yes if !data.clickable?
+		data.clickable = no if !data.clickable?
 		options = []
 		if data.responses?
 			options = data.responses
+
+		for o in options
+			if o.display? && o.display == "background"
+				message.close = =>
+					responder.respond { response_chosen_id: o.id }
+				data.clickable = yes
+				break
 
 		message.respond = (response) =>
 			responder.respond { response_chosen_id: response } 
