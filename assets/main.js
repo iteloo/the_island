@@ -299,6 +299,51 @@
           return _this.toggle();
         };
       })(this));
+      $('.inventory').sortable({
+        helper: function(e, ui) {
+          var type;
+          type = ui.attr('data-production-type');
+          if (player.products[type].amount <= 0) {
+            return $('<div></div>');
+          } else {
+            return $("<div class='square placeholder'></div>").css('background-color', player.products[ui.attr('data-production-type')].color);
+          }
+        },
+        start: function(e, ui) {
+          return ui.item.show();
+        },
+        change: function() {
+          return $(this).sortable("refreshPositions");
+        },
+        placeholder: 'test',
+        stop: function(e, ui) {
+          var item, offset;
+          offset = ui.originalPosition.top - ui.position.top;
+          if (stage instanceof TradingStage) {
+            item = stage.products[ui.item.attr('data-production-type')];
+            if (offset > 50) {
+              item.trade.call(item);
+            }
+            return $(this).sortable('cancel');
+          }
+        }
+      });
+      $('.inventory span.inventorycount').each(function() {
+        var color, type;
+        $(this).html("<span class='block'>&#9632;</span> x <span class='count'>0</span>");
+        type = $(this).attr('data-production-type');
+        color = player.products[type].color;
+        $(this).children('.block').css('color', color);
+        return $(this).hide();
+      });
+      $('.inventory span.inventorycount').taphold(function() {
+        var type;
+        type = $(this).attr('data-production-type');
+        pycon.transaction('item_activated', {
+          item_name: type
+        });
+        return console.log("I tried to use a " + type);
+      });
       this.close();
       this.needsRefresh();
     }
@@ -1018,42 +1063,7 @@
           return _this.refreshTradingPlatform();
         };
       })(this), 300);
-      $('.inventory').sortable({
-        helper: function(e, ui) {
-          var type;
-          type = ui.attr('data-production-type');
-          if (me.products[type].product.amount <= 0) {
-            return $('<div></div>');
-          } else {
-            return $("<div class='square placeholder'></div>").css('background-color', player.products[ui.attr('data-production-type')].color);
-          }
-        },
-        start: function(e, ui) {
-          return ui.item.show();
-        },
-        change: function() {
-          return $(this).sortable("refreshPositions");
-        },
-        placeholder: 'test',
-        stop: function(e, ui) {
-          var item, offset;
-          offset = ui.originalPosition.top - ui.position.top;
-          item = me.products[ui.item.attr('data-production-type')];
-          if (offset > 50) {
-            item.trade.call(item);
-          }
-          return $(this).sortable('cancel');
-        }
-      });
       $('.tradingstage-interface .trading span.tradecount').each(function() {
-        var color, type;
-        $(this).html("<span class='block'>&#9632;</span> x <span class='count'>0</span>");
-        type = $(this).attr('data-production-type');
-        color = player.products[type].color;
-        $(this).children('.block').css('color', color);
-        return $(this).hide();
-      });
-      $('.inventory span.inventorycount').each(function() {
         var color, type;
         $(this).html("<span class='block'>&#9632;</span> x <span class='count'>0</span>");
         type = $(this).attr('data-production-type');
@@ -1217,27 +1227,6 @@
         _results.push(card.on_production.call(card));
       }
       return _results;
-    };
-
-    TradingStage.prototype.refreshCards = function() {
-      var card, deck, element, index, _i, _len, _ref;
-      deck = $('.powerups .deck');
-      deck.html("");
-      index = 0;
-      _ref = player.cards;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        card = _ref[_i];
-        console.log('Adding card: ', card);
-        element = $("<div class='card' data-card-index='" + index + "'>" + (card.render.call(card)) + "</div>").tap(function() {
-          card = player.cards[$(this).attr('data-card-index')];
-          return card.activate.call(card);
-        });
-        element.appendTo(deck);
-        index += 1;
-      }
-      return $('.tradingstage-interface .card').fitText(1, {
-        minFontSize: '25px'
-      });
     };
 
     TradingStage.prototype.timer_begin = function(countdown) {
