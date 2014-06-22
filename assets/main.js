@@ -503,6 +503,8 @@
       }
       if (data.stage_type === 'Job') {
         window.stage = new JobStage();
+      } else if (data.stage_type === 'Day') {
+        window.stage = new DayStage();
       } else if (data.stage_type === 'Production') {
         window.stage = new ProductionStage();
       } else if (data.stage_type === 'Notification') {
@@ -554,6 +556,16 @@
         return stage.update_job_selections.call(stage, data);
       }
     });
+    pycon.register_for_event('display_event', function(data, responder) {
+      window.message.display(data.title, data.text);
+      return window.message.onclose = (function(_this) {
+        return function() {
+          return responder.respond({
+            response_chosen_id: data.responses[0].id
+          });
+        };
+      })(this);
+    });
     pycon.register_for_event('echo', function(data, responder) {
       return responder.respond(data);
     });
@@ -577,6 +589,11 @@
     function Message() {
       this.dom_selector = '.message';
       this.timeout = 5;
+      this.onclose = (function(_this) {
+        return function() {
+          return true;
+        };
+      })(this);
     }
 
     Message.prototype.display = function(title, text, clickable, options, duration) {
@@ -614,6 +631,7 @@
     };
 
     Message.prototype.hide = function() {
+      this.onclose();
       $(this.dom_selector).unbind();
       $(this.dom_selector).hide();
       return $('.overlay').hide();
@@ -1183,5 +1201,16 @@
     return TradingProduct;
 
   })();
+
+  window.DayStage = (function(_super) {
+    __extends(DayStage, _super);
+
+    function DayStage() {
+      true;
+    }
+
+    return DayStage;
+
+  })(Stage);
 
 }).call(this);

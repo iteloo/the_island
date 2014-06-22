@@ -57,6 +57,8 @@ window.go = ->
 			window.stage.end()
 		if data.stage_type == 'Job'
 			window.stage = new JobStage()
+		else if data.stage_type == 'Day'
+			window.stage = new DayStage()
 		else if data.stage_type == 'Production'
 			window.stage = new ProductionStage()
 		else if data.stage_type == 'Notification'
@@ -99,6 +101,12 @@ window.go = ->
 
 	pycon.register_for_event 'update_job_selections', (data) ->
 		stage.update_job_selections.call(stage,data) if stage.update_job_selections? 
+
+	pycon.register_for_event 'display_event', (data, responder) ->
+		# data.title, data.image_name, data.text, data.responses[]
+		window.message.display data.title, data.text
+		window.message.onclose = =>
+			responder.respond( { response_chosen_id: data.responses[0].id } )
 
 	pycon.register_for_event 'echo', (data, responder) ->
 		responder.respond(data)
