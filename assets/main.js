@@ -539,11 +539,24 @@
       window.inventorypanel.needsRefresh();
       return window.updateInterface();
     });
-    pycon.register_for_event('DisplayMessage', function(data) {
+    pycon.register_for_event('display_event', function(data, responder) {
+      debugger;
+      var options;
       if (data.clickable == null) {
         data.clickable = true;
       }
-      return message.display.call(message, data.title, data.text, data.clickable);
+      options = [];
+      if (data.responses != null) {
+        options = data.responses;
+      }
+      message.respond = (function(_this) {
+        return function(response) {
+          return responder.respond({
+            response_chosen_id: response
+          });
+        };
+      })(this);
+      return message.display.call(message, data.title, data.text, data.clickable, options);
     });
     pycon.register_for_event('InventoryCountRequested', function(data) {
       return pycon.transaction({
@@ -555,16 +568,6 @@
       if (stage.update_job_selections != null) {
         return stage.update_job_selections.call(stage, data);
       }
-    });
-    pycon.register_for_event('display_event', function(data, responder) {
-      window.message.display(data.title, data.text);
-      return window.message.onclose = (function(_this) {
-        return function() {
-          return responder.respond({
-            response_chosen_id: data.responses[0].id
-          });
-        };
-      })(this);
     });
     pycon.register_for_event('echo', function(data, responder) {
       return responder.respond(data);
@@ -597,17 +600,18 @@
     }
 
     Message.prototype.display = function(title, text, clickable, options, duration) {
-      var me;
+      var me, o, _i, _len;
       if (clickable == null) {
         clickable = true;
       }
       if (options == null) {
-        options = {};
+        options = [];
       }
       if (duration == null) {
         duration = null;
       }
       me = this;
+      debugger;
       $('.overlay').show();
       if (text == null) {
         text = '';
@@ -618,16 +622,34 @@
       $(this.dom_selector).children('.title').html(title);
       $(this.dom_selector).children('.text').html(text);
       $(this.dom_selector).show();
+      this.dom_element = $(this.dom_selector);
+      this.buttons = [];
+      this.dom_element.children('.message-buttons').html('');
+      if ((options != null) && options.length > 0) {
+        clickable = false;
+        for (_i = 0, _len = options.length; _i < _len; _i++) {
+          o = options[_i];
+          this.buttons.push(new MessageButton(this, o.text, o.id));
+        }
+      }
       if (clickable) {
-        $(this.dom_selector).tap(function() {
-          return me.hide.call(me);
-        });
+        $(this.dom_selector).tap((function(_this) {
+          return function() {
+            return _this.hide();
+          };
+        })(this));
       }
       if (duration != null) {
-        return setTimeout(function() {
-          return window.message.hide.call(message);
-        }, duration * 1000);
+        return setTimeout((function(_this) {
+          return function() {
+            return window.message.hide();
+          };
+        })(this), duration * 1000);
       }
+    };
+
+    Message.prototype.respond = function(response) {
+      return true;
     };
 
     Message.prototype.hide = function() {
@@ -638,6 +660,29 @@
     };
 
     return Message;
+
+  })();
+
+  this.MessageButton = (function() {
+    function MessageButton(parent, text, id) {
+      this.parent = parent;
+      this.text = text;
+      this.id = id;
+      this.dom_element = $("<div class='message-button'>" + this.text + "</div>");
+      this.dom_element.tap((function(_this) {
+        return function() {
+          return _this.click();
+        };
+      })(this));
+      this.parent.dom_element.children(".message-buttons").append(this.dom_element);
+    }
+
+    MessageButton.prototype.click = function() {
+      this.parent.respond(this.id);
+      return this.parent.hide();
+    };
+
+    return MessageButton;
 
   })();
 

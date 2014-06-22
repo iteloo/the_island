@@ -92,21 +92,23 @@ window.go = ->
 		window.updateInterface()
 		
 	# Is it possible
-	pycon.register_for_event 'DisplayMessage', (data) ->
+	pycon.register_for_event 'display_event', (data, responder) ->
+		debugger;
 		data.clickable = yes if !data.clickable?
-		message.display.call message,data.title, data.text, data.clickable
+		options = []
+		if data.responses?
+			options = data.responses
+
+		message.respond = (response) =>
+			responder.respond { response_chosen_id: response } 
+
+		message.display.call message,data.title, data.text, data.clickable, options
 
 	pycon.register_for_event 'InventoryCountRequested', (data) ->
 		pycon.transaction {action: data.callback, data: player.getInventoryCount.call player }
 
 	pycon.register_for_event 'update_job_selections', (data) ->
 		stage.update_job_selections.call(stage,data) if stage.update_job_selections? 
-
-	pycon.register_for_event 'display_event', (data, responder) ->
-		# data.title, data.image_name, data.text, data.responses[]
-		window.message.display data.title, data.text
-		window.message.onclose = =>
-			responder.respond( { response_chosen_id: data.responses[0].id } )
 
 	pycon.register_for_event 'echo', (data, responder) ->
 		responder.respond(data)

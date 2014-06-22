@@ -12,6 +12,27 @@ html,body {
 	font-size: 50pt;
 }
 
+.message-button {
+	font-size: 30pt;
+	box-shadow: 5px 5px 0px #000000;
+	width: 214px;
+	margin-left: 0;
+	border: 2px solid black;
+	display: inline;
+	padding-left: 20px;
+	padding-right: 20px;
+	/* display: inherit; */
+	cursor: hand;
+	margin-left: 10px;
+	margin-right: 10px;
+}
+
+.message-buttons { 
+	margin-left: auto;
+	margin-right: auto;
+	width: 100%;
+}
+
 .overlay {
 	background-color: black;
 	opacity: 0.8;
