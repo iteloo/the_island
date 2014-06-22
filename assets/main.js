@@ -540,7 +540,6 @@
       return window.updateInterface();
     });
     pycon.register_for_event('display_event', function(data, responder) {
-      debugger;
       var options;
       if (data.clickable == null) {
         data.clickable = true;
@@ -611,7 +610,6 @@
         duration = null;
       }
       me = this;
-      debugger;
       $('.overlay').show();
       if (text == null) {
         text = '';
