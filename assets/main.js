@@ -339,9 +339,11 @@
       me = this;
       this.jobs = {};
       $('.ready').show();
-      $('.ready').tap(function() {
-        return me.ready.call(me);
-      });
+      $('.ready').tap((function(_this) {
+        return function() {
+          return _this.ready();
+        };
+      })(this));
       $('.jobstage-interface').show();
       $('.jobstage-interface .box').each(function() {
         var jobcode;
@@ -745,8 +747,11 @@
       } else {
         this.food = 100;
       }
-      food_points = Math.ceil(this.food / 33.0);
-      food_string = Array(food_points + 1).join("<span class='food'>&nbsp;&nbsp;&nbsp;</span>") + Array(3 - food_points + 1).join("<span class='anti food'>&nbsp;&nbsp;&nbsp;</span>");
+      food_points = Math.ceil(this.food / 50.0);
+      if (this.food < 10) {
+        food_points = 0;
+      }
+      food_string = Array(food_points + 1).join("<span class='food'>&nbsp;&nbsp;&nbsp;</span>") + Array(3 - food_points).join("<span class='anti food'>&nbsp;&nbsp;&nbsp;</span>");
       return $('.statusbar .hunger').html(food_string);
     };
 
@@ -957,6 +962,12 @@
       this.timers = [];
       $('.tradingstage-interface').show();
       player.update();
+      $('.ready').show();
+      $('.ready').tap((function(_this) {
+        return function() {
+          return _this.ready();
+        };
+      })(this));
       $('.health').show();
       $('.hunger').show();
       this.products = {};
@@ -1028,6 +1039,11 @@
       $('.countdown').show();
       TradingStage.__super__.constructor.apply(this, arguments);
     }
+
+    TradingStage.prototype.ready = function() {
+      $('.ready').addClass('active');
+      return pycon.transaction('ready');
+    };
 
     TradingStage.prototype.end = function() {
       var interval, _i, _len, _ref2;

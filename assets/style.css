@@ -342,8 +342,8 @@ h4 {
 	background-position:center; 
 	background-repeat: no-repeat;
 	display: inline-block;
-	width: 50px;
-	margin-left: 10px;
+	width: 30px;
+	margin-left: 0px;
 	background-image: url('/assets/carrot.png');
 	background-size: contain;
 }

@@ -11,6 +11,11 @@ class window.TradingStage extends Stage
 		$('.tradingstage-interface').show()
 		player.update()
 
+		$('.ready').show()
+
+		$('.ready').tap =>
+			@ready()
+
 		$('.health').show()
 		$('.hunger').show()
 		# Register all of the trading products boxes. They are instances
@@ -104,6 +109,11 @@ class window.TradingStage extends Stage
 		$('.countdown').show()
 
 		super
+
+	ready: ->
+		# Show the ready as GREEN instead of GRAY
+		$('.ready').addClass('active')
+		pycon.transaction 'ready'
 
 	end: ->
 		$('.countdown').hide()
