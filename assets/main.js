@@ -729,7 +729,7 @@
         this.health = 100;
       }
       health_points = Math.ceil(this.health / 34.0);
-      health_string = Array(health_points + 1).join("&#9829;") + Array(4 - health_points).join("&#9825;");
+      health_string = Array(health_points + 1).join("&#9829;") + Array(4 - health_points).join("<div class='antiheart'>&#9829;</div>");
       return $('.statusbar .health').html(health_string);
     };
 
