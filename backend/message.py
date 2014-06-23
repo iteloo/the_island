@@ -318,7 +318,8 @@ def call(method, *args, check_error=True, **kwargs):
             # todo: This will mask any TypeError exceptions we might not want to mask
             try:
                 return method(*args, **kwargs)
-            except TypeError:
+            except TypeError as err:
+                print(err)
                 raise InvalidArgumentError(args, kwargs)
         else:
             raise InvalidMethodError

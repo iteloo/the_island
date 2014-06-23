@@ -1,10 +1,12 @@
 from backend import message
 from backend import helpers
+from backend.stage import event
 
 import collections
 
 
 class Player(message.MessageDelegate):
+
     _currentId = 0
     conditions = ['health', 'antihunger']
 
@@ -24,9 +26,8 @@ class Player(message.MessageDelegate):
         self._inventory = None
         self._condition = None
 
-        # event management variable
-        self._event_queue = []
-        self._current_event = None
+        # event handling
+        self.event_handler = event.EventHandler(self)
 
     def __str__(self):
         return "Player%d" % self.id
@@ -130,36 +131,9 @@ class Player(message.MessageDelegate):
 
     ### event handling methods
 
-    def schedule_events(self, events: list, start_queue=True, immediately=False):
-        self._event_queue = events + self._event_queue if immediately else self._event_queue + events
-        if start_queue:
-            self.next_event()
-
-    def schedule_event(self, event, **kwargs):
-        self.schedule_events([event], **kwargs)
-
-    def event_did_end(self, event):
-        # if the event that just ended is the current event, then go to the next event
-        # otherwise it must have been terminated by the player
-        self._current_event = None
-        self.next_event()
-
-    def next_event(self, force=False):
-        # if there is currently an event, end it; this will result in a event_did_end call after this method has returned
-        if self._current_event:
-            if force:
-                self._current_event.end()
-                # make sure we return so that next_event doesn't get called twice
-            return
-
-        # retrieve the next event on the queue and evoke it
-        if self._event_queue:
-            new_event = self._event_queue.pop(0)
-            self._current_event = new_event
-            new_event.evoke()
-        else:
-            # todo: fix this; this is day stage specific
-            self.current_game.current_stage.ready(self)
+    def event_queue_did_empty(self, event_queue):
+        # todo: fix this; this is day stage specific
+        self.current_game.current_stage.ready(self)
 
     ### message delegate methods ###
 

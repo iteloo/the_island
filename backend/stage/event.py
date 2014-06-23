@@ -1,7 +1,84 @@
-from backend import server
-
 import math
 import random
+
+
+class EventHandler():
+    """The event handler can be in either of two states:
+        - processing: whenever the stack depletes, the handler will automatically push the next event (if any) in the queue into the stack
+        - idle: it does nothing except wait for the events in the stack to respond
+
+    """
+
+    def __init__(self, delegate):
+        self.delegate = delegate
+        self._event_queue = []  # queue waiting to be processed (in order)
+        self._event_stack = []  # stack of event currently displaying on client (bottom-up)
+        self._processing = False
+
+    @property
+    def processing(self):
+        return self._processing
+
+    def start_processing(self):
+        # if not processing, start processing
+        if not self.processing:
+            self._processing = True
+            # push event from queue if event stack is empty
+            if not self._event_stack:
+                self._push_next_event()
+
+    def stop_processing(self):
+        # if processing, stop it
+        if self.processing:
+            self._processing = False
+
+    def schedule_events(self, events: list, location='last'):
+        """Schedule events in the queue at `location`. Note the handler might not be currently processing.
+
+            location = 'immediately' | 'next up' | 'last'
+
+        """
+
+        # hack
+        event_queue_was_empty = not self._event_queue
+
+        if location == 'immediately':
+            for event in events:
+                self._push_event(event)
+        elif location == 'next up':
+            self._event_queue = events + self._event_queue
+        elif location == 'last':
+            self._event_queue += events
+
+        # hack: this gets checked every time an event is scheduled
+        if self.processing and event_queue_was_empty and (location == 'next up' or location == 'last'):
+            self._push_next_event()
+
+    def schedule_event(self, event, **kwargs):
+        self.schedule_events([event], **kwargs)
+
+    def event_did_end(self, event):
+        assert event in self._event_stack
+        # remove from stack
+        self._event_stack.remove(event)
+        # if stack is now empty, process next event in queue
+        if not self._event_stack and self.processing:
+            self._push_next_event()
+
+    def _push_next_event(self):
+        """Push the next event in the queue into the stack"""
+
+        if self._event_queue:
+            # retrieve next event on queue and push into stack
+            self._push_event(self._event_queue.pop(0))
+        else:
+            self.delegate.event_queue_did_empty(self)
+
+    def _push_event(self, event):
+        """Push event into stack and evoke it"""
+
+        self._event_stack.append(event)
+        event.evoke()
 
 
 class Event():
@@ -17,6 +94,7 @@ class Event():
         self.player = player
         self.facility = player.current_job
         self.game = player.current_game
+        self.delegate = player.event_handler
 
     def should_happen(self):
         """override to use to decide if event happens (e.g. based on some risk or condition)"""
@@ -32,7 +110,8 @@ class Event():
         self.end()
 
     def end(self):
-        server.ioloop.add_callback(self.player.event_did_end, self)
+        from backend import server
+        server.ioloop.add_callback(self.delegate.event_did_end, self)
 
 
 class DismissibleEvent(Event):
@@ -70,12 +149,15 @@ class FacilityRepairEvent(Event):
             {
                 'id': 'okay',
                 'text': 'Okay'
-            },
-            {
-                'id': 'repair',
-                'text': 'Repair (costs 1 log)'
             }
         ]
+        if self.player.inventory['log'] > 0:
+            self.responses += [
+                {
+                    'id': 'repair',
+                    'text': 'Repair (costs 1 log)'
+                }
+            ]
 
     def handle_response(self, response_chosen_id):
         if response_chosen_id == 'repair':
@@ -89,7 +171,7 @@ class FacilityRepairEvent(Event):
             self.player.current_game.repair(self.facility)
 
             # insert another repair event into player event queue
-            self.player.schedule_event(FacilityRepairEvent(self.player), immediately=True)
+            self.delegate.schedule_event(FacilityRepairEvent(self.player), location='next up')
         elif response_chosen_id == 'ignore':
             # nothing happens
             pass
@@ -161,14 +243,17 @@ class AnimalAttackEvent(Event):
         self.text = 'What are you going to doooo!?'
         self.responses = [
             {
-                'id': 'shoot',
-                'text': 'Shoot (costs 1 bullet)'
-            },
-            {
                 'id': 'ignore',
                 'text': 'Ignore'
             }
         ]
+        if self.player.inventory['bullet'] > 0:
+            self.responses += [
+                {
+                    'id': 'shoot',
+                    'text': 'Shoot (costs 1 bullet)'
+                }
+            ]
 
     def should_happen(self):
         condition = self.player.current_game.facility_condition[self.facility]

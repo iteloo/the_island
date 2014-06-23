@@ -21,5 +21,6 @@ class DayStage(ready_stage.ReadyStage):
         # harvest + possible animal attack
         events += [event.ResourceHarvestEvent(sender), event.AnimalAttackEvent(sender)]
 
-        # this will start the queue after scheduling all the events
-        sender.schedule_events(events)
+        # start the queue after scheduling all the events
+        sender.event_handler.schedule_events(events)
+        sender.event_handler.start_processing()
