@@ -9,6 +9,11 @@ class Player(message.MessageDelegate):
 
     _currentId = 0
     conditions = ['health', 'antihunger']
+    MAX_CONDITIONS = {'health': 100.0, 'antihunger': 100.0}
+    MIN_CONDITIONS = {'health': 0.0, 'antihunger': 0.0}
+
+    ANTIHUNGER_PER_FOOD = 50.0
+    HEALTH_PER_BANDAGE = 35.0
 
     def __init__(self, *args, **kwargs):
         # call super
@@ -55,9 +60,21 @@ class Player(message.MessageDelegate):
     def after_client_setup(self) -> None:
         pass
 
-    @message.forward('self.current_game')
     def item_activated(self, item_name: str) -> None:
-        pass
+        if item_name == 'log':
+            pass
+        elif item_name == 'food':
+            self.add_inventory(food=-1)
+            self.add_condition(antihunger=self.ANTIHUNGER_PER_FOOD)
+            self.event_handler.schedule_event(event.MessageEvent(self, text='It\'s so yummyyy'), location='immediately')
+        elif item_name == 'bandage':
+            self.add_inventory(bandage=-1)
+            self.add_condition(health=self.HEALTH_PER_BANDAGE)
+            self.event_handler.schedule_event(event.MessageEvent(self, text='The bandage stinks a bit, but you feel better.'), location='immediately')
+        elif item_name == 'bullet':
+            pass
+        else:
+            raise "Item not recognized!"
 
     @message.forward('self.current_game.current_stage')
     def job_selected(self, job: str) -> None:
@@ -101,39 +118,54 @@ class Player(message.MessageDelegate):
 
     @property
     def inventory(self):
-        return self._inventory
+        return self._inventory.copy()
 
     @inventory.setter
     def inventory(self, value):
         self._inventory = value
-        self.update_player_info(self._inventory, self._condition)
+        self.update_player_info(self.inventory, self.condition)
 
     @property
     def condition(self):
-        return self._condition
+        return self._condition.copy()
 
     @condition.setter
     def condition(self, value):
         self._condition = value
-        self.update_player_info(self._inventory, self._condition)
+        self.update_player_info(self.inventory, self.condition)
 
-    def add_inventory(self, items):
+    def add_inventory(self, **items):
         for r, count in items.items():
-            self.inventory[r] += count
+            self._inventory[r] += count
         # hack: notify client
         self.inventory = self.inventory
 
-    def subtract_inventory(self, items):
+    def subtract_inventory(self, **items):
         for r, count in items.items():
-            self.inventory[r] -= count
+            self._inventory[r] -= count
         # hack: notify client
         self.inventory = self.inventory
+
+    def add_condition(self, **condition):
+        for r, count in condition.items():
+            new_r = self.condition[r] + count
+            self._condition[r] = min(new_r, self.MAX_CONDITIONS[r])
+        # hack: notify client
+        self.condition = self.condition
+
+    def subtract_condition(self, **condition):
+        for r, count in condition.items():
+            new_r = self.condition[r] - count
+            self._condition[r] = max(new_r, self.MIN_CONDITIONS[r])
+        # hack: notify client
+        self.condition = self.condition
 
     ### event handling methods
 
     def event_queue_did_empty(self, event_queue):
         # todo: fix this; this is day stage specific
-        self.current_game.current_stage.ready(self)
+        if self.current_game.current_stage.stage_type == 'Day':
+            self.current_game.current_stage.ready(self)
 
     ### message delegate methods ###
 

@@ -54,8 +54,8 @@ class EventHandler():
         if self.processing and event_queue_was_empty and (location == 'next up' or location == 'last'):
             self._push_next_event()
 
-    def schedule_event(self, event, **kwargs):
-        self.schedule_events([event], **kwargs)
+    def schedule_event(self, event, location='last'):
+        self.schedule_events([event], location)
 
     def event_did_end(self, event):
         assert event in self._event_stack
@@ -133,8 +133,8 @@ class DismissibleEvent(Event):
 
 class MessageEvent(DismissibleEvent):
 
-    def __init__(self, title="", text="", *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, player, title="", text="", *args, **kwargs):
+        super().__init__(player, *args, **kwargs)
         self.title = title
         self.text = text
 
@@ -163,9 +163,7 @@ class FacilityRepairEvent(Event):
         if response_chosen_id == 'repair':
             # client will need to check if enough log, maybe grey out option otherwise
             assert self.player.inventory['log'] > 0
-            self.player.inventory['log'] -= 1
-            # hack
-            self.player.inventory = self.player.inventory
+            self.player.subtract_inventory(log=1)
 
             # repair facility
             self.player.current_game.repair(self.facility)
@@ -228,9 +226,7 @@ class ResourceHarvestEvent(DismissibleEvent):
         self.text = 'You received %d more %s. ' % (resource_yield, resource)
 
         # give player resource
-        self.player.inventory[resource] += resource_yield
-        # hack
-        self.player.inventory = self.player.inventory
+        self.player.add_inventory(**{resource: resource_yield})
 
 
 class AnimalAttackEvent(Event):
@@ -264,16 +260,11 @@ class AnimalAttackEvent(Event):
         if response_chosen_id == 'shoot':
             # client will need to check if enough bullets, maybe grey out option otherwise
             assert self.player.inventory['bullet'] > 0
-            self.player.inventory['bullet'] -= 1
-            # hack
-            self.player.inventory = self.player.inventory
+            self.player.add_inventory(bullet=-1)
         elif response_chosen_id == 'ignore':
             # damage the facility the player is currently at
             self.player.current_game.damage(self.player.current_job, type='animal attack')
             # damage player health
-            new_health = max(self.player.condition['health'] - self.game.ANIMAL_ATTACK_HEALTH_DAMAGE, 0.0)
-            self.player.condition['health'] = new_health
-            # hack
-            self.player.condition = self.player.condition
+            self.player.add_condition(health=-self.game.ANIMAL_ATTACK_HEALTH_DAMAGE)
 
         super().handle_response(response_chosen_id)
