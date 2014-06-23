@@ -47,7 +47,7 @@ class @PyAPI
 			@trigger_event message.method, message.args
 
 	# This function generates a transaction ID, based upon the current time.
-	generate_transaction_id: (message) ->
+	generate_transaction_id: () ->
 		# For now, we just use a random number. But this introduces
 		# random behavior - it might be better to use a hashing algorithm
 		# in the future. Returns a string.
@@ -85,7 +85,7 @@ class @PyAPI
 		# If we care about a reponse, we must include a responder function. 
 		# Then we'll generate a transaction ID to listen for a response on.
 		if responder?
-			transaction_id = @generate_transaction_id(message)
+			transaction_id = @generate_transaction_id()
 			# Add the "callback_id" parameter to the message
 			transmission.args.callback_id = transaction_id
 			# Register the responder in the responders database

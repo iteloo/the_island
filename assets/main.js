@@ -43,7 +43,7 @@
       }
     };
 
-    PyAPI.prototype.generate_transaction_id = function(message) {
+    PyAPI.prototype.generate_transaction_id = function() {
       return "T" + Math.random();
     };
 
@@ -81,7 +81,7 @@
         args: args
       };
       if (responder != null) {
-        transaction_id = this.generate_transaction_id(message);
+        transaction_id = this.generate_transaction_id();
         transmission.args.callback_id = transaction_id;
         this.response_handlers[transaction_id] = function(response) {
           return responder.call(this, response);
@@ -195,8 +195,13 @@
     __extends(DayStage, _super);
 
     function DayStage() {
-      true;
+      this.dom_element = $("<div class='wait'><h3>Waiting for everyone else...</h3></div>");
+      $(".interface").append(this.dom_element);
     }
+
+    DayStage.prototype.end = function() {
+      return this.dom_element.remove();
+    };
 
     return DayStage;
 
@@ -535,20 +540,26 @@
     });
   } else {
     $(function() {
-      window.socket = new WebSocket("ws://" + location.host + "/json");
-      window.jevent('SocketOpened', function() {});
-      console.log('The socket was opened.');
-      socket.onopen = function() {
-        console.log("Socket connection opened successfully.");
-        window.pycon = new PyAPI(window.socket);
-        return window.go();
-      };
-      return socket.onclose = function() {
-        console.log("Socket connection was closed, unexpectedly.");
-        return window.message.display("Oh No!", "I don't know why, but the socket was closed (!)");
-      };
+      return window.login_controller = new LoginController();
     });
   }
+
+  window.connectToGame = function() {
+    window.socket = new WebSocket("ws://" + location.host + "/json");
+    window.jevent('SocketOpened', function() {});
+    console.log('The socket was opened.');
+    socket.onopen = function() {
+      console.log("Socket connection opened successfully.");
+      window.pycon = new PyAPI(window.socket);
+      return window.go();
+    };
+    return socket.onclose = function() {
+      var m;
+      console.log("Socket connection was closed, unexpectedly.");
+      m = new Message();
+      return m.display("Oh No!", "I don't know why, but the socket was closed (!)");
+    };
+  };
 
   window.go = function() {
     pycon.register_for_event('update_game_info', function(data) {
@@ -598,7 +609,7 @@
       return window.updateInterface();
     });
     pycon.register_for_event('display_event', function(data, responder) {
-      var o, options, _i, _len;
+      var m, o, options, _i, _len;
       if (data.clickable == null) {
         data.clickable = false;
       }
@@ -606,10 +617,11 @@
       if (data.responses != null) {
         options = data.responses;
       }
+      m = new Message();
       for (_i = 0, _len = options.length; _i < _len; _i++) {
         o = options[_i];
         if ((o.display != null) && o.display === "background") {
-          message.close = (function(_this) {
+          m.close = (function(_this) {
             return function() {
               return responder.respond({
                 response_chosen_id: o.id
@@ -620,14 +632,14 @@
           break;
         }
       }
-      message.respond = (function(_this) {
+      m.respond = (function(_this) {
         return function(response) {
           return responder.respond({
             response_chosen_id: response
           });
         };
       })(this);
-      return message.display.call(message, data.title, data.text, data.clickable, options);
+      return m.display(data.title, data.text, data.clickable, options);
     });
     pycon.register_for_event('InventoryCountRequested', function(data) {
       return pycon.transaction({
@@ -661,7 +673,7 @@
 
   window.Message = (function() {
     function Message() {
-      this.dom_selector = '.message';
+      this.dom_element = $("<div class='message'><h3 class='title'></h3><p class='text'></p><div class='message-buttons'></div></div>");
       this.timeout = 5;
       this.onclose = (function(_this) {
         return function() {
@@ -682,6 +694,7 @@
         duration = null;
       }
       me = this;
+      $(".interface").append(this.dom_element);
       $('.overlay').show();
       if (text == null) {
         text = '';
@@ -689,10 +702,9 @@
       if (title == null) {
         title = '';
       }
-      $(this.dom_selector).children('.title').html(title);
-      $(this.dom_selector).children('.text').html(text);
-      $(this.dom_selector).show();
-      this.dom_element = $(this.dom_selector);
+      this.dom_element.children('.title').html(title);
+      this.dom_element.children('.text').html(text);
+      this.dom_element.show();
       this.buttons = [];
       this.dom_element.children('.message-buttons').html('');
       if ((options != null) && options.length > 0) {
@@ -704,10 +716,11 @@
         }
       }
       if (clickable) {
-        $(this.dom_selector).tap((function(_this) {
+        this.dom_element.tap((function(_this) {
           return function() {
             _this.close();
-            return _this.hide();
+            _this.hide();
+            return _this.destroy;
           };
         })(this));
       }
@@ -728,10 +741,14 @@
       return true;
     };
 
+    Message.prototype.destroy = function() {
+      return this.dom_element.remove();
+    };
+
     Message.prototype.hide = function() {
       this.onclose();
-      $(this.dom_selector).unbind();
-      $(this.dom_selector).hide();
+      this.dom_element.unbind();
+      this.dom_element.hide();
       return $('.overlay').hide();
     };
 
@@ -761,8 +778,6 @@
     return MessageButton;
 
   })();
-
-  window.message = new Message();
 
   window.Player = (function() {
     function Player() {
@@ -1278,6 +1293,42 @@
     };
 
     return TradingProduct;
+
+  })();
+
+  this.LoginController = (function() {
+    function LoginController() {
+      var cookie, err;
+      this.background = $("<div class='overlay login-background'><h3>Who are you?</h3><input value=name type=text /><br /><br /><div class='message-button'>OK</div></div>").show();
+      this.button = this.background.children('.message-button');
+      this.input = this.background.children('input');
+      cookie = {};
+      try {
+        cookie = JSON.parse(document.cookie);
+      } catch (_error) {
+        err = _error;
+        true;
+      }
+      if (cookie.username != null) {
+        this.input.val(cookie.username);
+      }
+      this.button.tap((function(_this) {
+        return function() {
+          return _this.finish();
+        };
+      })(this));
+      $(".interface").append(this.background);
+    }
+
+    LoginController.prototype.finish = function() {
+      document.cookie = JSON.stringify({
+        username: this.input.val()
+      });
+      this.background.remove();
+      return window.connectToGame();
+    };
+
+    return LoginController;
 
   })();
 
