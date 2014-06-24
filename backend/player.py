@@ -7,7 +7,6 @@ import collections
 
 class Player(message.MessageDelegate):
 
-    _currentId = 0
     conditions = ['health', 'antihunger']
     MAX_CONDITIONS = {'health': 100.0, 'antihunger': 100.0}
     MIN_CONDITIONS = {'health': 0.0, 'antihunger': 0.0}
@@ -15,13 +14,12 @@ class Player(message.MessageDelegate):
     ANTIHUNGER_PER_FOOD = 50.0
     HEALTH_PER_BANDAGE = 35.0
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, id, *args, **kwargs):
         # call super
-        super(Player, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
-        # general vars
-        self.id = self._currentId
-        Player._currentId += 1
+        # player vars
+        self.id = id
 
         # game management vars
         self.current_game = None
@@ -35,7 +33,7 @@ class Player(message.MessageDelegate):
         self.event_handler = event.EventHandler(self)
 
     def __str__(self):
-        return "Player%d" % self.id
+        return self.id
 
     ### server-side methods ###
 
@@ -56,6 +54,10 @@ class Player(message.MessageDelegate):
         from backend.server import RUN_DATE, VERSION
         callback(start_date=RUN_DATE, version=VERSION)
 
+    def quit(self):
+        from backend import game_controller
+        game_controller.universal_controller.quit_game(self)
+
     @message.forward('self.current_game.current_stage')
     def after_client_setup(self) -> None:
         pass
@@ -66,11 +68,11 @@ class Player(message.MessageDelegate):
         elif item_name == 'food':
             self.add_inventory(food=-1)
             self.add_condition(antihunger=self.ANTIHUNGER_PER_FOOD)
-            self.event_handler.schedule_event(event.MessageEvent(self, text='It\'s so yummyyy'), location='immediately')
+            self.event_handler.schedule_event(event.NotificationEvent(self, text='It\'s so yummyyy'), location='immediately')
         elif item_name == 'bandage':
             self.add_inventory(bandage=-1)
             self.add_condition(health=self.HEALTH_PER_BANDAGE)
-            self.event_handler.schedule_event(event.MessageEvent(self, text='The bandage stinks a bit, but you feel better.'), location='immediately')
+            self.event_handler.schedule_event(event.NotificationEvent(self, text='The bandage stinks a bit, but you feel better.'), location='immediately')
         elif item_name == 'bullet':
             pass
         else:
@@ -103,6 +105,10 @@ class Player(message.MessageDelegate):
         pass
 
     @message.sending
+    def refresh(self):
+        pass
+
+    @message.sending
     def stage_begin(self, stage_type: str, callback: collections.Callable) -> None:
         pass
 
@@ -111,7 +117,7 @@ class Player(message.MessageDelegate):
         pass
 
     @message.sending
-    def display_event(self, title: str, image_name: str, text: str, responses: list, callback: collections.Callable) -> None:
+    def display_event(self, title: str, image_name: str, text: str, responses: list, inputs: list, callback: collections.Callable) -> None:
         pass
 
     ### operational methods
@@ -160,32 +166,36 @@ class Player(message.MessageDelegate):
         # hack: notify client
         self.condition = self.condition
 
-    ### event handling methods
+    ### event handler delegate methods
 
     def event_queue_did_empty(self, event_queue):
-        # todo: fix this; this is day stage specific
         if self.current_game.current_stage.stage_type == 'Day':
             self.current_game.current_stage.ready(self)
 
     ### message delegate methods ###
 
     def on_open(self):
-        from backend import game_controller
-
-        # join the only game for now
-        self.join_game(game_controller.GameController.staticGame)
-
-        # hack: initiate first update
-        self.inventory = self.inventory
-        self.condition = self.condition
+        pass
 
     def on_close(self):
-        # quit game
-        self.quit_game()
+        # if in a game (e.g. caused by disconnect), stash player
+        if self.current_game:
+            self.current_game.stash_player(self)
+        # else probably caused by leaving (rather, the resulting refreshing)
+
+    ### event methods ###
+
+    def notify(self, title='', text='', on_dismiss=None):
+        """Convenience method to send a NotificationEvent to client"""
+
+        self.event_handler.schedule_event(event.NotificationEvent(self, title=title, text=text, on_dismiss=on_dismiss), location='immediately')
 
     ### game management methods ###
 
-    def join_game(self, game):
+    def display_main_menu(self):
+        self.event_handler.schedule_event(event.MainMenuEvent(self), location='immediately')
+
+    def will_join_game(self, game):
         self.current_game = game
 
         # initialize game state vars
@@ -193,8 +203,11 @@ class Player(message.MessageDelegate):
         self._inventory = dict((r, 4) for r in game.resources)
         self._condition = dict(zip(Player.conditions, [100, 100]))
 
-        game.add_player(self)
+        # hack: initiate first update
+        self.inventory = self.inventory
+        self.condition = self.condition
 
-    def quit_game(self):
-        self.current_game.remove_player(self)
+    def did_quit_game(self, game):
         self.current_game = None
+        # tell client to refresh
+        self.refresh()

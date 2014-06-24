@@ -41,7 +41,7 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
         # make new delegate object
         assert delegate_class
         assert issubclass(delegate_class, MessageDelegate)
-        self.delegate = delegate_class(self)
+        self.delegate = delegate_class()
 
         # callback-sending handling vars
         self._current_callback_id = 0
@@ -220,8 +220,12 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
         return self._delegate
 
     @delegate.setter
-    def delegate(self, value):
-        self._delegate = value
+    def delegate(self, delegate):
+        if delegate:
+            if not isinstance(delegate, MessageDelegate):
+                raise Exception("Delegate has to inherit from MessageDelegate")
+            delegate._message_handler = self
+        self._delegate = delegate
 
 
 ### Message delegate ###
@@ -229,7 +233,7 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
 # noinspection PyProtectedMember
 class MessageDelegate(object):
 
-    def __init__(self, message_handler):
+    def __init__(self, message_handler=None):
         # add handler ivar
         self._message_handler = message_handler
 

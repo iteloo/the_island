@@ -47,6 +47,8 @@ window.connectToGame = ->
 
 # When everything is loaded and ready to go, this function is called.
 window.go = ->
+	# We must send the name according to the ancient tradition of the logincontroller
+	pycon.transaction 'name_entered', { name: login_controller.input.val() }
 	# When the player count changes we need to update the status bar.
 	pycon.register_for_event 'update_game_info', (data) ->
 		console.log 'Player count changed: ', data
@@ -60,7 +62,7 @@ window.go = ->
 		if stage? 
 			window.stage.end()
 		if data.stage_type == 'Job'
-			window.stage = new JobStage() 
+			window.stage = new JobStage()
 		else if data.stage_type == 'Day'
 			window.stage = new DayStage()
 		else if data.stage_type == 'Production'
@@ -102,6 +104,10 @@ window.go = ->
 		if data.responses?
 			options = data.responses
 
+		inputs = []
+		if data.inputs?
+			inputs = data.inputs
+
 		m = new Message()
 
 		for o in options
@@ -112,9 +118,9 @@ window.go = ->
 				break
 
 		m.respond = (response) =>
-			responder.respond { response_chosen_id: response } 
+			responder.respond { response_chosen_id: response, inputs: m.input_states() } 
 
-		m.display data.title, data.text, data.clickable, options
+		m.display data.title, data.text, data.clickable, options, inputs
 
 	pycon.register_for_event 'InventoryCountRequested', (data) ->
 		pycon.transaction {action: data.callback, data: player.getInventoryCount.call player }
@@ -127,6 +133,10 @@ window.go = ->
 
 	pycon.register_for_event 'GivePoints', (data) ->
 		player.givePoints data.amount
+
+	# If somebody sends a message to refresh, dutifully refresh.
+	pycon.register_for_event 'refresh', (data) ->
+		location.reload 0
 
 	# Begin the timer? We just pass this directly into the stage.
 	pycon.register_for_event 'TimerBegin', (data) ->
