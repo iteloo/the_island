@@ -54,6 +54,10 @@ class Player(message.MessageDelegate):
         from backend.server import RUN_DATE, VERSION
         callback(start_date=RUN_DATE, version=VERSION)
 
+    def quit(self):
+        from backend import game_controller
+        game_controller.universal_controller.quit_game(self)
+
     @message.forward('self.current_game.current_stage')
     def after_client_setup(self) -> None:
         pass
@@ -64,11 +68,11 @@ class Player(message.MessageDelegate):
         elif item_name == 'food':
             self.add_inventory(food=-1)
             self.add_condition(antihunger=self.ANTIHUNGER_PER_FOOD)
-            self.event_handler.schedule_event(event.MessageEvent(self, text='It\'s so yummyyy'), location='immediately')
+            self.event_handler.schedule_event(event.NotificationEvent(self, text='It\'s so yummyyy'), location='immediately')
         elif item_name == 'bandage':
             self.add_inventory(bandage=-1)
             self.add_condition(health=self.HEALTH_PER_BANDAGE)
-            self.event_handler.schedule_event(event.MessageEvent(self, text='The bandage stinks a bit, but you feel better.'), location='immediately')
+            self.event_handler.schedule_event(event.NotificationEvent(self, text='The bandage stinks a bit, but you feel better.'), location='immediately')
         elif item_name == 'bullet':
             pass
         else:
@@ -98,6 +102,10 @@ class Player(message.MessageDelegate):
 
     @message.sending
     def update_player_info(self, inventory: dict, condition: dict) -> None:
+        pass
+
+    @message.sending
+    def refresh(self):
         pass
 
     @message.sending
@@ -170,10 +178,17 @@ class Player(message.MessageDelegate):
         pass
 
     def on_close(self):
-        # quit game
-        # todo: check this
-        self.current_game.remove_player(self)
-        self.did_quit_game(self.current_game)
+        # if in a game (e.g. caused by disconnect), stash player
+        if self.current_game:
+            self.current_game.stash_player(self)
+        # else probably caused by leaving (rather, the resulting refreshing)
+
+    ### event methods ###
+
+    def notify(self, title='', text='', on_dismiss=None):
+        """Convenience method to send a NotificationEvent to client"""
+
+        self.event_handler.schedule_event(event.NotificationEvent(self, title=title, text=text, on_dismiss=on_dismiss), location='immediately')
 
     ### game management methods ###
 
@@ -194,4 +209,5 @@ class Player(message.MessageDelegate):
 
     def did_quit_game(self, game):
         self.current_game = None
-        # todo: tell client to refresh
+        # tell client to refresh
+        self.refresh()

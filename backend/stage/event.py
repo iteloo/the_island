@@ -2,6 +2,7 @@ from backend import message
 
 import math
 import random
+import functools
 
 
 class EventHandler():
@@ -88,7 +89,9 @@ class Event():
 
     """
 
-    def __init__(self, player):
+    def __init__(self, player, callback=None):
+        """If a callback is specified it must accept two arguments: response_chosen_id and inputs"""
+
         self.title = ''
         self.image_name = ''
         self.text = ''
@@ -96,6 +99,7 @@ class Event():
         self.inputs = []
         self.player = player
         self.delegate = player.event_handler
+        self.callback = callback
 
     def should_happen(self):
         """override to use to decide if event happens (e.g. based on some risk or condition)"""
@@ -108,6 +112,11 @@ class Event():
             self.end()
 
     def handle_response(self, response_chosen_id, inputs=None):
+        # invoke callback, if any
+        if self.callback is not None:
+            from backend import server
+            server.ioloop.add_callback(self.callback, response_chosen_id=response_chosen_id, inputs=inputs)
+        # terminate
         self.end()
 
     def end(self):
@@ -179,7 +188,7 @@ class JoinMenuEvent(Event):
         # if game with matching name not found, display this message again
         if not success:
             self.delegate.schedule_events(
-                [JoinMenuEvent(self.player), MessageEvent(self.player, title='Game not found', text='Try again')],
+                [JoinMenuEvent(self.player), NotificationEvent(self.player, title='Game not found', text='Try again')],
                 location='immediately'
             )
 
@@ -205,12 +214,19 @@ class DismissibleEvent(Event):
         super().handle_response(response_chosen_id, inputs=None)
 
 
-class MessageEvent(DismissibleEvent):
+class NotificationEvent(DismissibleEvent):
 
-    def __init__(self, player, title="", text="", *args, **kwargs):
+    def __init__(self, player, title="", text="", *args, on_dismiss=None, **kwargs):
         super().__init__(player, *args, **kwargs)
         self.title = title
         self.text = text
+
+        # replace standard callback with on_dismiss
+        if on_dismiss:
+            @functools.wraps(on_dismiss)
+            def wrapped_on_dismiss(*args, **kwargs):
+                on_dismiss()
+            self.callback = wrapped_on_dismiss
 
 
 #### game events ####

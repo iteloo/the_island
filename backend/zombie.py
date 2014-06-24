@@ -35,16 +35,9 @@ class Zombie(message.MessageDelegate):
         # attempt to identify player object
         p = game_controller.universal_controller.player_with_id(name)
 
-        # case 1: if existing player that is already in game
-        if p and p.current_game:
-            # restore player
-            # todo: implement unstash
-            p.current_game.unstash_player(p)
-        # case 2: if existing player not in a game
-        elif p and not p.current_game:
-            pass
+        # todo: handle case where player with same id is actually playing
         # case 3: if new player
-        else:
+        if not p:
             # make new player object
             p = player.Player(name)
             # register player with game controller
@@ -54,8 +47,13 @@ class Zombie(message.MessageDelegate):
         self._message_handler.delegate = p
         # this zombie should now be living a free life
 
-        # display main menu if in case 2 or 3
-        if (not p) or (p and not p.current_game):
+        # case 1: if existing player that is already in game
+        if p and p.current_game:
+            p.current_game.unstash_player(p)
+        # case 2: if existing player not in a game
+        # case 3: if new player
+        elif (not p) or (p and not p.current_game):
+            # display main menu
             p.display_main_menu()
 
     ### client-side methods ###

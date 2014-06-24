@@ -1,4 +1,5 @@
 from backend import game
+from backend import helpers
 
 
 class GameController(object):
@@ -22,7 +23,7 @@ class GameController(object):
         self._player_with_id.pop(player.id)
 
     def new_game(self, player):
-        new_game = game.Game(owner=player)
+        new_game = game.Game(owner=player, delegate=self)
         new_game.begin()
         self.games.append(new_game)
         player.will_join_game(new_game)
@@ -38,11 +39,20 @@ class GameController(object):
             return False
 
     def quit_game(self, player):
-        # todo: implement this; call this when client choose to quit using in-game menu
-
         game_to_quit = player.current_game
-        game_to_quit.remove_player(self)
+        game_to_quit.remove_player(player)
         player.did_quit_game(game_to_quit)
+
+    #### game delegation method ####
+
+    def game_did_begin(self, g):
+        # logging
+        helpers.print_header("==> %s began" % g)
+
+    def game_did_end(self, g):
+        self.games.remove(g)
+        # logging
+        helpers.print_header("==> %s ended" % g)
 
     #### convenience ####
 
