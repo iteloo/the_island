@@ -31,6 +31,7 @@ class window.Message
 					@inputs[i.name] = $("<input type=text class='message-input message-input-textbox' />")
 
 		# Throw all supported inputs into the loop.
+		@dom_element.children('.message-inputs').html ""
 		for k,i of @inputs
 			@dom_element.children('.message-inputs').append i
 
@@ -64,7 +65,7 @@ class window.Message
 	input_states: ->
 		state = {}
 		for k,i of @inputs
-			state[k] = i.value()
+			state[k] = i.val()
 		return state
 
 	respond: (response) ->
