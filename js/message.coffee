@@ -27,8 +27,8 @@ class window.Message
 		@inputs = {}
 		if inputs? && inputs.length > 0
 			for i in inputs
-				if i.name? && i.type == "textbox"
-					@inputs[i.name] = $("<input type=text class='message-input message-input-textbox' />")
+				if i.id? && i.type == "textbox"
+					@inputs[i.id] = $("<input type=text class='message-input message-input-textbox' />")
 
 		# Throw all supported inputs into the loop.
 		@dom_element.children('.message-inputs').html ""
