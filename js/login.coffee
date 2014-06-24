@@ -25,3 +25,4 @@ class @LoginController
 		document.cookie = JSON.stringify { username: @input.val() }
 		@background.remove()
 		window.connectToGame()
+		pycon.transaction 'name_entered', { name: @input.val() }
