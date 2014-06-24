@@ -12,8 +12,7 @@ $ ->
 	window.handleResize()
 	$('.interface > div').each ->
 		$(@).hide()
-	
-
+		
 	# Check for CDN failure and refresh if yes
 	if !$.ui? or !$.mobile?
 		location.reload true
@@ -84,6 +83,20 @@ class @InventoryPanel
 						# from getting re-ordered.
 						$(@).sortable 'cancel'
 		}
+
+		@quit_button = $("<div class='message-button quit-button'>Leave game</div>")
+		# If someone clicks on the quit button, we need to double-check them
+		# before they quit and all that
+		@quit_button.click (e) =>
+			e.preventDefault()
+			console.log "quit button tapped!"
+			m = new Message()
+			m.respond = (response) =>
+				if response == yes
+					pycon.transaction 'quit'
+			m.display("Sure to quit?", "", no, [{text: "leave game", id: yes}, {text: "don't quit", id: no}])
+			yes
+		$('.inventory').append @quit_button
 
 
 		$('.inventory span.inventorycount').each ->

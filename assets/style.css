@@ -33,6 +33,16 @@ span.antiheart {
 	background-color: white;
 }
 
+input.message-input.message-input-textbox {
+	margin-bottom: 20px;
+	box-shadow: 5px 5px 0px #000000;
+	border: 1px solid black;
+}
+
+.quit-button {
+	text-align: center;margin-left: auto; margin-right: auto;display: block;margin-top: 60px;
+}
+
 .message-buttons { 
 	margin-left: auto;
 	margin-right: auto;
@@ -60,6 +70,7 @@ span.antiheart {
 input {
 	text-align:center;
 	font-size: 30pt;
+	max-width: 90%;
 }
 
 /* Everybody */
