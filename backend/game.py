@@ -32,20 +32,23 @@ class Game(object):
     RESOURCE_HARVEST_YIELD_AT_FULL_CONDITION = 3
     MAX_ANIMAL_ATTACK_RISK = 1.0
 
-    def __init__(self):
+    def __init__(self, owner):
+        self.owner = owner
         self.players = []
+        self._stashed_players = []
 
         # stage management variables
-        self.stage_queue = 2 * [job_stage.JobStage, day_stage.DayStage, trading_stage.TradingStage]
+        self.stage_queue = 3 * [job_stage.JobStage, day_stage.DayStage, trading_stage.TradingStage]
         self.current_stage = None
-
-        # start the first stage
-        self.next_stage()
 
         # game state management variables
         self.facility_condition = dict((facility, 1.0) for facility in Game.jobs)
 
     ### stage management ###
+
+    def begin(self):
+        # todo: add more refined game state handling
+        self.next_stage()
 
     def stage_can_end(self, stage):
         assert self.current_stage is stage
@@ -142,3 +145,17 @@ class Game(object):
             player.update_game_info(player_count=len(self.players))
 
         # todo: handle global state changes!
+
+    def stash_player(self, player):
+        # todo: finish implementing this
+        assert player in self.players and player not in self._stashed_players
+        self.players.remove(player)
+        self._stashed_players.append(player)
+        pass
+
+    def unstash_player(self, player):
+        # todo: finish implementing this
+        assert player in self._stashed_players and player not in self.players
+        self._stashed_players.remove(player)
+        self.players.append(player)
+        pass

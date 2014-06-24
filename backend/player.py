@@ -7,7 +7,6 @@ import collections
 
 class Player(message.MessageDelegate):
 
-    _currentId = 0
     conditions = ['health', 'antihunger']
     MAX_CONDITIONS = {'health': 100.0, 'antihunger': 100.0}
     MIN_CONDITIONS = {'health': 0.0, 'antihunger': 0.0}
@@ -15,13 +14,12 @@ class Player(message.MessageDelegate):
     ANTIHUNGER_PER_FOOD = 50.0
     HEALTH_PER_BANDAGE = 35.0
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, id, *args, **kwargs):
         # call super
-        super(Player, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
-        # general vars
-        self.id = self._currentId
-        Player._currentId += 1
+        # player vars
+        self.id = id
 
         # game management vars
         self.current_game = None
@@ -35,7 +33,7 @@ class Player(message.MessageDelegate):
         self.event_handler = event.EventHandler(self)
 
     def __str__(self):
-        return "Player%d" % self.id
+        return self.id
 
     ### server-side methods ###
 
@@ -160,32 +158,29 @@ class Player(message.MessageDelegate):
         # hack: notify client
         self.condition = self.condition
 
-    ### event handling methods
+    ### event handler delegate methods
 
     def event_queue_did_empty(self, event_queue):
-        # todo: fix this; this is day stage specific
         if self.current_game.current_stage.stage_type == 'Day':
             self.current_game.current_stage.ready(self)
 
     ### message delegate methods ###
 
     def on_open(self):
-        from backend import game_controller
-
-        # join the only game for now
-        self.join_game(game_controller.GameController.staticGame)
-
-        # hack: initiate first update
-        self.inventory = self.inventory
-        self.condition = self.condition
+        pass
 
     def on_close(self):
         # quit game
-        self.quit_game()
+        # todo: check this
+        self.current_game.remove_player(self)
+        self.did_quit_game(self.current_game)
 
     ### game management methods ###
 
-    def join_game(self, game):
+    def display_main_menu(self):
+        self.event_handler.schedule_event(event.MainMenuEvent(self), location='immediately')
+
+    def will_join_game(self, game):
         self.current_game = game
 
         # initialize game state vars
@@ -193,8 +188,10 @@ class Player(message.MessageDelegate):
         self._inventory = dict((r, 4) for r in game.resources)
         self._condition = dict(zip(Player.conditions, [100, 100]))
 
-        game.add_player(self)
+        # hack: initiate first update
+        self.inventory = self.inventory
+        self.condition = self.condition
 
-    def quit_game(self):
-        self.current_game.remove_player(self)
+    def did_quit_game(self, game):
         self.current_game = None
+        # todo: tell client to refresh

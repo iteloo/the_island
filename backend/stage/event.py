@@ -4,7 +4,7 @@ import random
 
 class EventHandler():
     """The event handler can be in either of two states:
-        - processing: whenever the stack depletes, the handler will automatically push the next event (if any) in the queue into the stack
+        - processing: whenever the stack depletes, the handler will automatically push the next event (if any, **inputs) in the queue into the stack
         - idle: it does nothing except wait for the events in the stack to respond
 
     """
@@ -92,8 +92,6 @@ class Event():
         self.text = ''
         self.responses = []
         self.player = player
-        self.facility = player.current_job
-        self.game = player.current_game
         self.delegate = player.event_handler
 
     def should_happen(self):
@@ -106,13 +104,47 @@ class Event():
         else:
             self.end()
 
-    def handle_response(self, response_chosen_id):
+    def handle_response(self, response_chosen_id, **inputs):
         self.end()
 
     def end(self):
         from backend import server
         server.ioloop.add_callback(self.delegate.event_did_end, self)
 
+
+#### menu events ####
+
+class MainMenuEvent(Event):
+
+    def __init__(self, player):
+        super().__init__(player)
+        self.title = 'Main Menu'
+        self.responses = [
+            {
+                'id': 'new',
+                'text': 'New Game'
+            },
+            {
+                'id': 'join',
+                'text': 'Join Game'
+            }
+        ]
+
+    def handle_response(self, response_chosen_id, **inputs):
+        from backend import game_controller
+
+        if response_chosen_id == 'new':
+            # create and join new game
+            game_controller.universal_controller.new_game(self.player)
+        elif response_chosen_id == 'join':
+            # todo: implement this
+            # will require textfield feature on client
+            pass
+
+        super().handle_response(response_chosen_id, **inputs)
+
+
+#### general events ####
 
 class DismissibleEvent(Event):
 
@@ -125,10 +157,10 @@ class DismissibleEvent(Event):
             }
         ]
 
-    def handle_response(self, response_chosen_id):
+    def handle_response(self, response_chosen_id, **inputs):
         if response_chosen_id == 'dismiss':
             pass
-        super().handle_response(response_chosen_id)
+        super().handle_response(response_chosen_id, **inputs)
 
 
 class MessageEvent(DismissibleEvent):
@@ -139,7 +171,17 @@ class MessageEvent(DismissibleEvent):
         self.text = text
 
 
-class FacilityRepairEvent(Event):
+#### game events ####
+
+class GameEvent(Event):
+
+    def __init__(self, player):
+        super().__init__(player)
+        self.facility = player.current_job
+        self.game = player.current_game
+
+
+class FacilityRepairEvent(GameEvent):
 
     def __init__(self, player):
         super().__init__(player)
@@ -159,7 +201,7 @@ class FacilityRepairEvent(Event):
                 }
             ]
 
-    def handle_response(self, response_chosen_id):
+    def handle_response(self, response_chosen_id, **inputs):
         if response_chosen_id == 'repair':
             # client will need to check if enough log, maybe grey out option otherwise
             assert self.player.inventory['log'] > 0
@@ -174,7 +216,7 @@ class FacilityRepairEvent(Event):
             # nothing happens
             pass
 
-        super().handle_response(response_chosen_id)
+        super().handle_response(response_chosen_id, **inputs)
 
     #### helpers ####
 
@@ -211,7 +253,7 @@ class FacilityRepairEvent(Event):
                 adjectives[int(math.floor(number / 3.0))])
 
 
-class ResourceHarvestEvent(DismissibleEvent):
+class ResourceHarvestEvent(GameEvent, DismissibleEvent):
 
     def __init__(self, player):
         super().__init__(player)
@@ -229,7 +271,7 @@ class ResourceHarvestEvent(DismissibleEvent):
         self.player.add_inventory(**{resource: resource_yield})
 
 
-class AnimalAttackEvent(Event):
+class AnimalAttackEvent(GameEvent):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -256,7 +298,7 @@ class AnimalAttackEvent(Event):
         risk = self.game.MAX_ANIMAL_ATTACK_RISK * (1 - condition) if self.facility != 'watchtower' else 1.0
         return random.random() < risk
 
-    def handle_response(self, response_chosen_id):
+    def handle_response(self, response_chosen_id, **inputs):
         if response_chosen_id == 'shoot':
             # client will need to check if enough bullets, maybe grey out option otherwise
             assert self.player.inventory['bullet'] > 0
@@ -267,4 +309,4 @@ class AnimalAttackEvent(Event):
             # damage player health
             self.player.add_condition(health=-self.game.ANIMAL_ATTACK_HEALTH_DAMAGE)
 
-        super().handle_response(response_chosen_id)
+        super().handle_response(response_chosen_id, **inputs)
