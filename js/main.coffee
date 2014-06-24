@@ -47,6 +47,8 @@ window.connectToGame = ->
 
 # When everything is loaded and ready to go, this function is called.
 window.go = ->
+	# We must send the name according to the ancient tradition of the logincontroller
+	pycon.transaction 'name_entered', { name: login_controller.input.val() }
 	# When the player count changes we need to update the status bar.
 	pycon.register_for_event 'update_game_info', (data) ->
 		console.log 'Player count changed: ', data
