@@ -109,7 +109,7 @@ class Player(message.MessageDelegate):
         pass
 
     @message.sending
-    def display_event(self, title: str, image_name: str, text: str, responses: list, callback: collections.Callable) -> None:
+    def display_event(self, title: str, image_name: str, text: str, responses: list, inputs: list, callback: collections.Callable) -> None:
         pass
 
     ### operational methods
