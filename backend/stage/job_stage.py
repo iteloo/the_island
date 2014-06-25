@@ -8,7 +8,7 @@ class JobStage(ready_stage.ReadyStage):
 
     def __init__(self, game) -> None:
         super().__init__(game)
-        self._job_selected = {}  # job selected indexed by player
+        self._job_selected = {}  # facility selected indexed by player
 
     @classmethod
     def title(cls) -> str:
@@ -16,13 +16,20 @@ class JobStage(ready_stage.ReadyStage):
 
     ### stage event handling ###
 
+    def begin(self):
+        # clear player jobs
+        for player in self.game.players:
+            if player.current_facility:
+                player.current_facility.leave(player)
+        super().begin()
+
     def end(self):
         super().end()
         # update player jobs
         for player in self.game.players:
             # the client is responsible for checking that player has a job selected when clicking ready
             assert player in self._job_selected
-            player.current_job = self._job_selected[player]
+            self._job_selected[player].join(player)
 
     ### action handling ###
 
@@ -31,11 +38,15 @@ class JobStage(ready_stage.ReadyStage):
             # handle deselection
             self._job_selected.pop(sender, None)
         else:
-            if job in self.game.jobs:
-                # change/add job selections
-                self._job_selected[sender] = job
-            else:
+            # find facility using `job` string
+            try:
+                facility = self.game.facilities[job]
+            except KeyError:
                 raise message.InvalidArgumentError("job_selected called with invalid job %s" % job, method='job_selected', args=(job,))
+            else:
+                # change/add job selections
+                self._job_selected[sender] = facility
+
         # notify all players of change
         self._update_job_selections_to_all()
 
@@ -45,7 +56,7 @@ class JobStage(ready_stage.ReadyStage):
     def _job_selections_id(self):
         """Return dictionary of player ids indexed by jobs"""
 
-        return dict((j, [p.id for p in players]) for j, players in helpers.invert(self._job_selected, codomain=self.game.jobs).items())
+        return dict((f.name, [p.id for p in players]) for f, players in helpers.invert(self._job_selected, codomain=self.game.facilities.values()).items())
 
     def _update_job_selections_to_all(self) -> None:
         for player in self.game.players:

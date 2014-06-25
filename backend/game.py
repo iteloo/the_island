@@ -3,6 +3,7 @@ from backend.stage import job_stage
 from backend.stage import day_stage
 from backend.stage import trading_stage
 from backend import observed_collection
+from backend import facility
 
 
 class Game(object):
@@ -26,8 +27,6 @@ class Game(object):
 
     resources = ['log', 'food', 'bandage', 'bullet']
     jobs = ['production', 'farm', 'hospital', 'watchtower']
-    FACILITY_DAMAGE_OF_TYPE = {'natural': .05, 'animal attack': .2}
-    FACILITY_REPAIR_PER_LOG = .05
     DEFAULT_HEALTH_DAMAGE = 5.0
     ANIMAL_ATTACK_HEALTH_DAMAGE = 35.0
     RESOURCE_HARVEST_YIELD_AT_FULL_CONDITION = 3
@@ -45,7 +44,12 @@ class Game(object):
         self.current_stage = None
 
         # game state management variables
-        self.facility_condition = dict((facility, 1.0) for facility in Game.jobs)
+        self.facilities = dict((f.name, f()) for f in [
+            facility.Production,
+            facility.Farm,
+            facility.Hospital,
+            facility.Watchtower]
+        )
 
     def __str__(self):
         return "%s's game" % self.owner
@@ -108,27 +112,6 @@ class Game(object):
 
         # begin new stage
         self.current_stage.begin()
-
-    ### facility management
-
-    def damage(self, facility, amount=None, type='natural'):
-        # determine amount
-        if amount is None:
-            amount = self.FACILITY_DAMAGE_OF_TYPE[type]
-        current_condition = self.facility_condition[facility]
-        self.facility_condition[facility] = max(current_condition - amount, 0.0)
-
-    def repair(self, facility, amount=FACILITY_REPAIR_PER_LOG):
-        current_condition = self.facility_condition[facility]
-        self.facility_condition[facility] = min(current_condition + amount, 1.0)
-
-    ### convenience ###
-
-    def players_with_job(self, job):
-        return [p for p in self.players if p.current_job == job]
-
-    def resource_with_job(self, job):
-        return dict(list(zip(self.jobs, self.resources)))[job]
 
     ### player management methods ###
 

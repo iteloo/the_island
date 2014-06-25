@@ -26,7 +26,7 @@ class Player(message.MessageDelegate):
         self.current_game = None
 
         # game state vars (will be initialized once we join game)
-        self.current_job = None
+        self.current_facility = None
         self._inventory = None
         self._condition = None
 
@@ -184,7 +184,7 @@ class Player(message.MessageDelegate):
     def will_join_game(self, game):
         # initialize game state vars
         self.current_game = game
-        self.current_job = None
+        self.current_facility = None
         self._inventory = observed_collection.ObservedDict()
         self._condition = observed_collection.ObservedDict()
         self._inventory.add_observer(self, self.player_info_updated)
@@ -195,7 +195,7 @@ class Player(message.MessageDelegate):
     def did_quit_game(self, game):
         # clean up vars
         self.current_game = None
-        self.current_job = None
+        self.current_facility = None
         self._inventory = None
         self._condition = None
 

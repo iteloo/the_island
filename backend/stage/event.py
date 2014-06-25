@@ -1,4 +1,5 @@
 from backend import message
+from backend import facility
 
 import math
 import random
@@ -244,7 +245,7 @@ class GameEvent(Event):
     def before_evoke(self):
         super().before_evoke()
 
-        self.facility = self.player.current_job
+        self.facility = self.player.current_facility
         self.game = self.player.current_game
 
 
@@ -253,7 +254,7 @@ class FacilityRepairEvent(GameEvent):
     def before_evoke(self):
         super().before_evoke()
 
-        self.text = 'The %s is looking %s. ' % (self.player.current_job, self.describe(self.game.facility_condition[self.facility]))
+        self.text = 'The %s is looking %s. ' % (self.player.current_facility.name, self.describe(self.facility.condition))
         self.responses += [
             {
                 'id': 'okay',
@@ -275,7 +276,7 @@ class FacilityRepairEvent(GameEvent):
             self.player.subtract_inventory(log=1)
 
             # repair facility
-            self.player.current_game.repair(self.facility)
+            self.facility.repair()
 
             # insert another repair event into player event queue
             self.delegate.schedule_event(FacilityRepairEvent(self.player), location='next up')
@@ -325,10 +326,10 @@ class ResourceHarvestEvent(GameEvent, DismissibleEvent):
     def before_evoke(self):
         super().before_evoke()
 
-        resource = self.player.current_game.resource_with_job(self.facility)
+        resource = self.facility.resource_yielded()
 
         # calculate resource yield
-        condition = self.player.current_game.facility_condition[self.facility]
+        condition = self.facility.condition
         resource_yield = math.ceil(condition * self.game.RESOURCE_HARVEST_YIELD_AT_FULL_CONDITION)
 
         # configure message
@@ -363,8 +364,8 @@ class AnimalAttackEvent(GameEvent):
     def should_happen(self):
         super().before_evoke()
 
-        condition = self.player.current_game.facility_condition[self.facility]
-        risk = self.game.MAX_ANIMAL_ATTACK_RISK * (1 - condition) if self.facility != 'watchtower' else 1.0
+        condition = self.facility.condition
+        risk = self.game.MAX_ANIMAL_ATTACK_RISK * (1 - condition) if not isinstance(self.facility, facility.Watchtower) else 1.0
         return random.random() < risk
 
     def handle_response(self, response_chosen_id, inputs=None):
@@ -374,7 +375,7 @@ class AnimalAttackEvent(GameEvent):
             self.player.add_inventory(bullet=-1)
         elif response_chosen_id == 'ignore':
             # damage the facility the player is currently at
-            self.player.current_game.damage(self.player.current_job, type='animal attack')
+            self.facility.damage(damage_type='animal attack')
             # damage player health
             self.player.add_condition(health=-self.game.ANIMAL_ATTACK_HEALTH_DAMAGE)
 
@@ -387,7 +388,7 @@ class BoatBuildingEvent(GameEvent):
         super().before_evoke()
 
         # compute the log cost per person
-        num_player_in_production = len(self.game.players_with_job('production'))
+        num_player_in_production = len(self.game.facilities[facility.Production.name].players)
         self.log_cost_per_person = self.log_cost_per_player(num_player_in_production)
 
         # construct message

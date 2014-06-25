@@ -1,5 +1,6 @@
 from backend.stage import ready_stage
 from backend.stage import event
+from backend import facility
 
 
 class DayStage(ready_stage.ReadyStage):
@@ -12,8 +13,8 @@ class DayStage(ready_stage.ReadyStage):
         self._players_who_invested_in_boat = []
 
         # damage facilities
-        for facility in self.game.jobs:
-            self.game.damage(facility, type='natural')
+        for f in self.game.facilities.values():
+            f.damage(damage_type='natural')
 
     def after_client_setup(self, sender):
         # determine sequence of events for each sender, and load the sequence
@@ -21,7 +22,7 @@ class DayStage(ready_stage.ReadyStage):
         # facility repair + possible animal attack
         events = [event.FacilityRepairEvent(sender), event.AnimalAttackEvent(sender)]
         # boat building event for players in production
-        if sender.current_job == 'production':
+        if isinstance(sender.current_facility, facility.Production):
             events.append(event.BoatBuildingEvent(sender))
         # harvest + possible animal attack
         events += [event.ResourceHarvestEvent(sender), event.AnimalAttackEvent(sender)]
@@ -34,7 +35,7 @@ class DayStage(ready_stage.ReadyStage):
         # add to list of investors
         self._players_who_invested_in_boat.append(player)
         # if all players in production invested, they can leave
-        if all([p in self._players_who_invested_in_boat for p in self.game.players_with_job('production')]):
+        if all([p in self._players_who_invested_in_boat for p in self.game.facilities[facility.Production.name].players]):
             for p in self._players_who_invested_in_boat:
                 # on dismiss, the browser will refresh
                 p.event_handler.schedule_event(event.BoatSuccessEvent(p), location='immediately')
