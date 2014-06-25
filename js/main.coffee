@@ -147,6 +147,14 @@ window.go = ->
 	pycon.register_for_event 'RequestProductionReport', (data) ->
 		stage.report_production() if stage.report_production?
 
+	# We need to exercise the connection or else it goes stale. So this will keep
+	# the connection alive.
+	setInterval =>
+		pycon.transaction 'echo', { }, =>
+			yes
+	,20000
+
 	updateStatusBar()
+	$('.statusbar').show()
 
 	window.inventorypanel = new InventoryPanel()
