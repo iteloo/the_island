@@ -1,5 +1,5 @@
 from backend import message
-from backend import player
+from backend import zombie
 from backend import helpers
 
 import tornado.ioloop
@@ -32,7 +32,7 @@ def run(port):
 
     # start application
     application = tornado.web.Application([
-        (r"/json", message.MessageHandler, {'delegate_class': player.Player}),
+        (r"/json", message.MessageHandler, {'delegate_class': zombie.Zombie}),
         (r"/test()", DebugStaticFileHandler, {'path': 'assets/test.html'}),
         (r"/()", DebugStaticFileHandler, {'path': 'assets/web.html'}),
         (r"/(.*)", DebugStaticFileHandler, {'path': '.'})

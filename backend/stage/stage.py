@@ -30,3 +30,9 @@ class Stage(object):
 
     def handle_remove_player(self, player_removed):
         pass
+
+    def handle_stash_player(self, player):
+        self.handle_remove_player(player)
+
+    def handle_unstash_player(self, player):
+        self.handle_add_player(player)

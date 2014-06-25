@@ -35,7 +35,7 @@ class JobStage(ready_stage.ReadyStage):
                 # change/add job selections
                 self._job_selected[sender] = job
             else:
-                raise message.InvalidArgumentError
+                raise message.InvalidArgumentError("job_selected called with invalid job %s" % job, method='job_selected', args=(job,))
         # notify all players of change
         self._update_job_selections_to_all()
 
