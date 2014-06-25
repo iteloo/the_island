@@ -1,6 +1,6 @@
 class @LoginController
 	constructor: ->
-		@background = $("<div class='overlay login-background'><h3>Who are you?</h3><input value=name type=text /><br /><br /><div class='message-button'>OK</div></div>").show()
+		@background = $("<div class='overlay login-background'><h3>Who are you?</h3><input type=text /><br /><br /><div class='message-button'>OK</div></div>").show()
 
 		@button = @background.children('.message-button')
 		@input 	= @background.children('input')

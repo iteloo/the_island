@@ -8,6 +8,9 @@ class DayStage(ready_stage.ReadyStage):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        # vars for keeping track of boat builders
+        self._players_who_invested_in_boat = []
+
         # damage facilities
         for facility in self.game.jobs:
             self.game.damage(facility, type='natural')
@@ -17,12 +20,23 @@ class DayStage(ready_stage.ReadyStage):
 
         # facility repair + possible animal attack
         events = [event.FacilityRepairEvent(sender), event.AnimalAttackEvent(sender)]
-        # todo: job related action
+        # boat building event for players in production
+        if sender.current_job == 'production':
+            events.append(event.BoatBuildingEvent(sender))
         # harvest + possible animal attack
         events += [event.ResourceHarvestEvent(sender), event.AnimalAttackEvent(sender)]
 
         # start the queue after scheduling all the events
         sender.event_handler.schedule_events(events)
         sender.event_handler.start_processing()
+
+    def invest_in_boat(self, player):
+        # add to list of investors
+        self._players_who_invested_in_boat.append(player)
+        # if all players in production invested, they can leave
+        if all([p in self._players_who_invested_in_boat for p in self.game.players_with_job('production')]):
+            for p in self._players_who_invested_in_boat:
+                # on dismiss, the browser will refresh
+                p.event_handler.schedule_event(event.BoatSuccessEvent(p), location='immediately')
 
     # todo: day stage needs to handle stashing; this may require additional logic pertaining to when the player is stashed
