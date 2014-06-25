@@ -32,20 +32,37 @@ class Game(object):
     RESOURCE_HARVEST_YIELD_AT_FULL_CONDITION = 3
     MAX_ANIMAL_ATTACK_RISK = 1.0
 
-    def __init__(self):
-        self.players = []
+    def __init__(self, owner, delegate):
+        self.owner = owner
+        self._delegate = delegate
+        self._players = []
+        self._stashed_players = []
 
         # stage management variables
-        self.stage_queue = 2 * [job_stage.JobStage, day_stage.DayStage, trading_stage.TradingStage]
+        self.stage_queue = 3 * [job_stage.JobStage, day_stage.DayStage, trading_stage.TradingStage]
         self.current_stage = None
-
-        # start the first stage
-        self.next_stage()
 
         # game state management variables
         self.facility_condition = dict((facility, 1.0) for facility in Game.jobs)
 
+    def __str__(self):
+        return "%s's game" % self.owner
+
     ### stage management ###
+
+    def begin(self):
+        # todo: add more refined game state handling
+        # load first stage
+        self.next_stage()
+        # notify delegate
+        self._delegate.game_did_begin(self)
+
+    def end(self):
+        # notify all players, and refresh browser when they dismiss the message
+        for p in self.players:
+            p.notify(title='The game ended', text='since the owner of the game left', on_dismiss=p.refresh)
+        # notify delegate
+        self._delegate.game_did_end(self)
 
     def stage_can_end(self, stage):
         assert self.current_stage is stage
@@ -113,32 +130,87 @@ class Game(object):
 
     ### player management methods ###
 
+    @property
+    def players(self):
+        return self._players.copy()
+
     def add_player(self, new_player):
-        self.players.append(new_player)
+        self._players.append(new_player)
 
         # logging
         helpers.print_header("==> %s joined" % new_player)
+
         # tell current stage to modify any data
-        self.current_stage.handle_add_player(new_player)
+        if self.current_stage:
+            self.current_stage.handle_add_player(new_player)
 
-        # notify all players that player count has increased
-        for player in self.players:
-            player.update_game_info(player_count=len(self.players))
-
-        # todo: handle global state changes!
+        # notify all players that player count has changed
+        # todo: observe player count automatically somehow (similar to KVO)
+        for p in self.players:
+            p.update_game_info(player_count=len(self.players))
 
     def remove_player(self, player):
         # remove players from self.players
-        self.players.remove(player)
+        self._players.remove(player)
 
         # logging
         helpers.print_header("==> %s left" % player)
 
         # tell current stage to modify any data
-        self.current_stage.handle_remove_player(player)
+        if self.current_stage:
+            self.current_stage.handle_remove_player(player)
 
-        # notify all players that player count has decreased
-        for player in self.players:
-            player.update_game_info(player_count=len(self.players))
+        # notify all players that player count has changed
+        # todo: observe player count automatically somehow (similar to KVO)
+        for p in self.players:
+            p.update_game_info(player_count=len(self.players))
 
-        # todo: handle global state changes!
+        # if the owner left, game should terminate itself
+        if player is self.owner:
+            self.end()
+
+    def stash_player(self, player):
+        # todo: finish implementing this
+        assert player in self.players and player not in self._stashed_players
+
+        # notify player
+        player.will_be_stashed(self)
+
+        # modify data
+        self._players.remove(player)
+        self._stashed_players.append(player)
+
+        # tell current stage to modify any data
+        if self.current_stage:
+            self.current_stage.handle_stash_player(player)
+
+        # notify all players that player count has changed
+        # todo: observe player count automatically somehow (similar to KVO)
+        for p in self.players:
+            p.update_game_info(player_count=len(self.players))
+
+        # logging
+        helpers.print_header("==> %s is disconnected" % player)
+
+    def unstash_player(self, player):
+        # todo: finish implementing this
+        assert player in self._stashed_players and player not in self.players
+
+        # notify player
+        player.will_be_unstashed(self)
+
+        # modify data
+        self._stashed_players.remove(player)
+        self._players.append(player)
+
+        # tell current stage to modify any data
+        if self.current_stage:
+            self.current_stage.handle_unstash_player(player)
+
+        # notify all players that player count has changed
+        # todo: observe player count automatically somehow (similar to KVO)
+        for p in self.players:
+            p.update_game_info(player_count=len(self.players))
+
+        # logging
+        helpers.print_header("==> %s is reconnected" % player)

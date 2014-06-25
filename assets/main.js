@@ -14,9 +14,13 @@
       this.response_handlers = [];
       this.event_responders = [];
       me = this;
-      this.socket.onmessage = function(message) {
-        return me.onmessage.call(me, message);
-      };
+      this.socket.onmessage = (function(_this) {
+        return function(message) {
+          return setTimeout(function() {
+            return _this.onmessage(message);
+          }, 1);
+        };
+      })(this);
       this.transaction('server_info', {}, function(data) {
         console.log("Attempted version validation. Received response:");
         console.log(data);
@@ -333,6 +337,31 @@
           }
         }
       });
+      this.quit_button = $("<div class='message-button quit-button'>Leave game</div>");
+      this.quit_button.click((function(_this) {
+        return function(e) {
+          var m;
+          e.preventDefault();
+          console.log("quit button tapped!");
+          m = new Message();
+          m.respond = function(response) {
+            if (response === true) {
+              return pycon.transaction('quit');
+            }
+          };
+          m.display("Sure to quit?", "", false, [
+            {
+              text: "leave game",
+              id: true
+            }, {
+              text: "don't quit",
+              id: false
+            }
+          ]);
+          return true;
+        };
+      })(this));
+      $('.inventory').append(this.quit_button);
       $('.inventory span.inventorycount').each(function() {
         var color, type;
         $(this).html("<span class='block'>&#9632;</span> x <span class='count'>0</span>");
@@ -518,6 +547,43 @@
 
   })();
 
+  this.LoginController = (function() {
+    function LoginController() {
+      var cookie, err;
+      this.background = $("<div class='overlay login-background'><h3>Who are you?</h3><input value=name type=text /><br /><br /><div class='message-button'>OK</div></div>").show();
+      this.button = this.background.children('.message-button');
+      this.input = this.background.children('input');
+      cookie = {};
+      try {
+        cookie = JSON.parse(document.cookie);
+      } catch (_error) {
+        err = _error;
+        true;
+      }
+      if (cookie.username != null) {
+        this.input.val(cookie.username);
+      }
+      this.button.tap((function(_this) {
+        return function() {
+          return _this.finish();
+        };
+      })(this));
+      $(".interface").append(this.background);
+    }
+
+    LoginController.prototype.finish = function() {
+      document.cookie = name + '=; expires=Thu, 01-Jan-70 00:00:01 GMT;';
+      document.cookie = JSON.stringify({
+        username: this.input.val()
+      });
+      this.background.remove();
+      return window.connectToGame();
+    };
+
+    return LoginController;
+
+  })();
+
   window.config = $.ajax({
     type: "GET",
     url: "/configuration.json",
@@ -562,6 +628,9 @@
   };
 
   window.go = function() {
+    pycon.transaction('name_entered', {
+      name: login_controller.input.val()
+    });
     pycon.register_for_event('update_game_info', function(data) {
       console.log('Player count changed: ', data);
       return $('.playercount').html(data.player_count);
@@ -590,7 +659,7 @@
       _ref = data.inventory;
       for (name in _ref) {
         amount = _ref[name];
-        if (window.stage instanceof TradingStage) {
+        if ((window.stage != null) && window.stage instanceof TradingStage) {
           player.products[name].amount = amount - window.stage.products[name].for_trade;
         } else {
           player.products[name].amount = amount;
@@ -604,18 +673,24 @@
           player.setFood(data.condition.antihunger);
         }
       }
-      stage.update();
+      if (typeof stage !== "undefined" && stage !== null) {
+        stage.update();
+      }
       window.inventorypanel.needsRefresh();
       return window.updateInterface();
     });
     pycon.register_for_event('display_event', function(data, responder) {
-      var m, o, options, _i, _len;
+      var inputs, m, o, options, _i, _len;
       if (data.clickable == null) {
         data.clickable = false;
       }
       options = [];
       if (data.responses != null) {
         options = data.responses;
+      }
+      inputs = [];
+      if (data.inputs != null) {
+        inputs = data.inputs;
       }
       m = new Message();
       for (_i = 0, _len = options.length; _i < _len; _i++) {
@@ -635,11 +710,12 @@
       m.respond = (function(_this) {
         return function(response) {
           return responder.respond({
-            response_chosen_id: response
+            response_chosen_id: response,
+            inputs: m.input_states()
           });
         };
       })(this);
-      return m.display(data.title, data.text, data.clickable, options);
+      return m.display(data.title, data.text, data.clickable, options, inputs);
     });
     pycon.register_for_event('InventoryCountRequested', function(data) {
       return pycon.transaction({
@@ -658,6 +734,9 @@
     pycon.register_for_event('GivePoints', function(data) {
       return player.givePoints(data.amount);
     });
+    pycon.register_for_event('refresh', function(data) {
+      return location.reload(0);
+    });
     pycon.register_for_event('TimerBegin', function(data) {
       console.log('Event handled: ', stage);
       return stage.timer_begin.call(stage, data.duration);
@@ -667,13 +746,21 @@
         return stage.report_production();
       }
     });
+    setInterval((function(_this) {
+      return function() {
+        return pycon.transaction('echo', {}, function() {
+          return true;
+        });
+      };
+    })(this), 20000);
     updateStatusBar();
+    $('.statusbar').show();
     return window.inventorypanel = new InventoryPanel();
   };
 
   window.Message = (function() {
     function Message() {
-      this.dom_element = $("<div class='message'><h3 class='title'></h3><p class='text'></p><div class='message-buttons'></div></div>");
+      this.dom_element = $("<div class='message' data-role='page'><h3 class='title'></h3><p class='text'></p><div class='message-inputs'></div><div class='message-buttons'></div></div>");
       this.timeout = 5;
       this.onclose = (function(_this) {
         return function() {
@@ -682,13 +769,16 @@
       })(this);
     }
 
-    Message.prototype.display = function(title, text, clickable, options, duration) {
-      var me, o, _i, _len;
+    Message.prototype.display = function(title, text, clickable, options, inputs, duration) {
+      var i, k, me, o, _i, _j, _len, _len1, _ref;
       if (clickable == null) {
         clickable = true;
       }
       if (options == null) {
         options = [];
+      }
+      if (inputs == null) {
+        inputs = [];
       }
       if (duration == null) {
         duration = null;
@@ -705,11 +795,26 @@
       this.dom_element.children('.title').html(title);
       this.dom_element.children('.text').html(text);
       this.dom_element.show();
+      this.inputs = {};
+      if ((inputs != null) && inputs.length > 0) {
+        for (_i = 0, _len = inputs.length; _i < _len; _i++) {
+          i = inputs[_i];
+          if ((i.id != null) && i.type === "textbox") {
+            this.inputs[i.id] = $("<input type=text class='message-input message-input-textbox' />");
+          }
+        }
+      }
+      this.dom_element.children('.message-inputs').html("");
+      _ref = this.inputs;
+      for (k in _ref) {
+        i = _ref[k];
+        this.dom_element.children('.message-inputs').append(i);
+      }
       this.buttons = [];
       this.dom_element.children('.message-buttons').html('');
       if ((options != null) && options.length > 0) {
-        for (_i = 0, _len = options.length; _i < _len; _i++) {
-          o = options[_i];
+        for (_j = 0, _len1 = options.length; _j < _len1; _j++) {
+          o = options[_j];
           if ((o.display == null) || o.display === "button") {
             this.buttons.push(new MessageButton(this, o.text, o.id));
           }
@@ -725,12 +830,24 @@
         })(this));
       }
       if (duration != null) {
-        return setTimeout((function(_this) {
+        setTimeout((function(_this) {
           return function() {
             return window.message.hide();
           };
         })(this), duration * 1000);
       }
+      return window.inventorypanel.close();
+    };
+
+    Message.prototype.input_states = function() {
+      var i, k, state, _ref;
+      state = {};
+      _ref = this.inputs;
+      for (k in _ref) {
+        i = _ref[k];
+        state[k] = i.val();
+      }
+      return state;
     };
 
     Message.prototype.respond = function(response) {
@@ -1293,42 +1410,6 @@
     };
 
     return TradingProduct;
-
-  })();
-
-  this.LoginController = (function() {
-    function LoginController() {
-      var cookie, err;
-      this.background = $("<div class='overlay login-background'><h3>Who are you?</h3><input value=name type=text /><br /><br /><div class='message-button'>OK</div></div>").show();
-      this.button = this.background.children('.message-button');
-      this.input = this.background.children('input');
-      cookie = {};
-      try {
-        cookie = JSON.parse(document.cookie);
-      } catch (_error) {
-        err = _error;
-        true;
-      }
-      if (cookie.username != null) {
-        this.input.val(cookie.username);
-      }
-      this.button.tap((function(_this) {
-        return function() {
-          return _this.finish();
-        };
-      })(this));
-      $(".interface").append(this.background);
-    }
-
-    LoginController.prototype.finish = function() {
-      document.cookie = JSON.stringify({
-        username: this.input.val()
-      });
-      this.background.remove();
-      return window.connectToGame();
-    };
-
-    return LoginController;
 
   })();
 

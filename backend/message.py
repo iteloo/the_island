@@ -41,7 +41,7 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
         # make new delegate object
         assert delegate_class
         assert issubclass(delegate_class, MessageDelegate)
-        self.delegate = delegate_class(self)
+        self.delegate = delegate_class()
 
         # callback-sending handling vars
         self._current_callback_id = 0
@@ -64,7 +64,7 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
             try:
                 msg = json.loads(message)
             except ValueError:
-                raise InvalidMessageFormatError
+                raise InvalidMessageFormatError("JSON message cannot be parsed", msg=message)
 
             # A proper message consists of a method and a dictionary of kwargs
             method_name = msg.get('method')
@@ -74,30 +74,35 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
                 if method_name == 'handle_callback':
                     # a `handle_callback` call must come with a `callback_id` and optionally `callback_args` as `args`
                     # it must not include anything else
-                    callback_id = kwargs.pop('callback_id', None)
-                    callback_args = kwargs.pop('callback_args', {})
-                    if callback_id is not None and not kwargs:  # note callback_id can be 0
-                        self._handle_callback(callback_id, callback_args)
+                    kwargs_test = kwargs.copy()
+                    callback_id = kwargs_test.pop('callback_id', None)
+                    callback_args = kwargs_test.pop('callback_args', {})
+                    # kwargs should contain a callback_id, and possibly callback_args, but nothing more
+                    if callback_id is not None:
+                        if not kwargs_test:  # note callback_id can be 0
+                            self._handle_callback(callback_id, callback_args)
+                        else:
+                            raise InvalidArgumentError(
+                                'handle_callback called with too many arguments',
+                                method=method_name,
+                                kwargs=kwargs
+                            )
                     else:
-                        raise InvalidArgumentError
+                        raise InvalidArgumentError(
+                            'handle_callback called with no callback_id',
+                            method=method_name,
+                            kwargs=kwargs.copy()
+                        )
                 # handle all other method calls
                 else:
                     self._invoke(method_name, kwargs)
             else:
-                raise InvalidMessageFormatError(msg)
-        except (InvalidMessageFormatError, InvalidMethodError, InvalidArgumentError) as err:
-            # log error for now
-            # todo: more sophisticated error handling
-            err_msg = "==> Caught error %s" % type(err).__name__
-            if err.args:
-                err_msg += " with details:"
-            helpers.print_header(err_msg)
-            if err.args:
-                print(err.args)
-        else:
-            # send a receipt if no error
-            # self._send_receipt(message)
-            pass
+                raise InvalidMessageFormatError(
+                    "Message does not contain a method name",
+                    msg=message
+                )
+        except (InvalidMessageFormatError, InvalidMethodError, InvalidArgumentError):
+            raise
 
     def on_close(self):
         # notify delegate
@@ -169,7 +174,11 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
             return self._callback_with_id.pop(callback_id)
         except KeyError:
             # todo: is there a more fitting type of error?
-            raise InvalidArgumentError(callback_id)
+            raise InvalidArgumentError(
+                "Cannot find callback object using callback_id",
+                method='handle_callback',
+                args=(callback_id,)
+            )
 
     def _generate_callback_id(self):
         """Generate a unique `callback_id`"""
@@ -211,8 +220,12 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
         return self._delegate
 
     @delegate.setter
-    def delegate(self, value):
-        self._delegate = value
+    def delegate(self, delegate):
+        if delegate:
+            if not isinstance(delegate, MessageDelegate):
+                raise Exception("Delegate has to inherit from MessageDelegate")
+            delegate._message_handler = self
+        self._delegate = delegate
 
 
 ### Message delegate ###
@@ -220,7 +233,7 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
 # noinspection PyProtectedMember
 class MessageDelegate(object):
 
-    def __init__(self, message_handler):
+    def __init__(self, message_handler=None):
         # add handler ivar
         self._message_handler = message_handler
 
@@ -293,15 +306,26 @@ def forward(recipient):
 ### errors ###
 
 class InvalidMethodError(Exception):
-    pass
+
+    def __init__(self, message="", method=""):
+        self.method = method
+        self.message = message
 
 
 class InvalidArgumentError(Exception):
-    pass
+
+    def __init__(self, message="", method=None, args=None, kwargs=None):
+        self.method = method
+        self.arguments = args
+        self.kwargs = kwargs
+        self.message = message
 
 
 class InvalidMessageFormatError(Exception):
-    pass
+
+    def __init__(self, message="", msg=None):
+        self.msg = msg
+        self.message = message
 
 
 ### method calling helpers ###
@@ -315,14 +339,19 @@ def call(method, *args, check_error=True, **kwargs):
 
     try:
         if method and isinstance(method, collections.Callable):
-            # todo: This will mask any TypeError exceptions we might not want to mask
             try:
-                return method(*args, **kwargs)
+                inspect.getcallargs(method, *args, **kwargs)
             except TypeError as err:
-                print(err)
-                raise InvalidArgumentError(args, kwargs)
+                raise InvalidArgumentError(
+                    "Attempt to invoke %s resulted in a TypeError %s" % (method, err),
+                    method=method,
+                    args=args,
+                    kwargs=kwargs.copy()
+                )
+            else:
+                return method(*args, **kwargs)
         else:
-            raise InvalidMethodError
+            raise InvalidMethodError(method=method)
     except (InvalidMethodError, InvalidArgumentError):
         if check_error:
             raise

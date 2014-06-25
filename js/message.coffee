@@ -4,13 +4,13 @@
 class window.Message
 	constructor: ->
 		# Create the element
-		@dom_element = $("<div class='message'><h3 class='title'></h3><p class='text'></p><div class='message-buttons'></div></div>")		
+		@dom_element = $("<div class='message' data-role='page'><h3 class='title'></h3><p class='text'></p><div class='message-inputs'></div><div class='message-buttons'></div></div>")		
 		@timeout = 5
 		@onclose = =>
 			yes
 
 	# An example of the options argument is something like: [ {text: "button text", callback: function() {} }, ... ]
-	display: (title,text,clickable=true,options=[],duration=null) ->
+	display: (title,text,clickable=true,options=[],inputs=[],duration=null) ->
 		me = @
 
 		$(".interface").append @dom_element
@@ -23,6 +23,17 @@ class window.Message
 		@dom_element.children('.text').html text
 		@dom_element.show()
 
+			# Now let's handle the inputs. Each input is like, a text box or whatever.
+		@inputs = {}
+		if inputs? && inputs.length > 0
+			for i in inputs
+				if i.id? && i.type == "textbox"
+					@inputs[i.id] = $("<input type=text class='message-input message-input-textbox' />")
+
+		# Throw all supported inputs into the loop.
+		@dom_element.children('.message-inputs').html ""
+		for k,i of @inputs
+			@dom_element.children('.message-inputs').append i
 
 		# Now consider whether we need buttons.
 		@buttons = []
@@ -46,6 +57,16 @@ class window.Message
 				window.message.hide()
 			, duration*1000
 
+		# Make the inventory screen disappear if it's open
+		window.inventorypanel.close()
+
+
+	# This function returns the state of all existing inputs.
+	input_states: ->
+		state = {}
+		for k,i of @inputs
+			state[k] = i.val()
+		return state
 
 	respond: (response) ->
 		yes

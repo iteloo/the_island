@@ -24,3 +24,5 @@ class DayStage(ready_stage.ReadyStage):
         # start the queue after scheduling all the events
         sender.event_handler.schedule_events(events)
         sender.event_handler.start_processing()
+
+    # todo: day stage needs to handle stashing; this may require additional logic pertaining to when the player is stashed

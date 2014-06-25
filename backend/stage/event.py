@@ -1,10 +1,13 @@
+from backend import message
+
 import math
 import random
+import functools
 
 
 class EventHandler():
     """The event handler can be in either of two states:
-        - processing: whenever the stack depletes, the handler will automatically push the next event (if any) in the queue into the stack
+        - processing: whenever the stack depletes, the handler will automatically push the next event (if any, inputs=None) in the queue into the stack
         - idle: it does nothing except wait for the events in the stack to respond
 
     """
@@ -86,15 +89,17 @@ class Event():
 
     """
 
-    def __init__(self, player):
+    def __init__(self, player, callback=None):
+        """If a callback is specified it must accept two arguments: response_chosen_id and inputs"""
+
         self.title = ''
         self.image_name = ''
         self.text = ''
         self.responses = []
+        self.inputs = []
         self.player = player
-        self.facility = player.current_job
-        self.game = player.current_game
         self.delegate = player.event_handler
+        self.callback = callback
 
     def should_happen(self):
         """override to use to decide if event happens (e.g. based on some risk or condition)"""
@@ -102,17 +107,95 @@ class Event():
 
     def evoke(self):
         if self.should_happen():
-            self.player.display_event(title=self.title, image_name=self.image_name, text=self.text, responses=self.responses, callback=self.handle_response)
+            self.player.display_event(title=self.title, image_name=self.image_name, text=self.text, responses=self.responses, inputs=self.inputs, callback=self.handle_response)
         else:
             self.end()
 
-    def handle_response(self, response_chosen_id):
+    def handle_response(self, response_chosen_id, inputs=None):
+        # invoke callback, if any
+        if self.callback is not None:
+            from backend import server
+            server.ioloop.add_callback(self.callback, response_chosen_id=response_chosen_id, inputs=inputs)
+        # terminate
         self.end()
 
     def end(self):
         from backend import server
         server.ioloop.add_callback(self.delegate.event_did_end, self)
 
+
+#### menu events ####
+
+class MainMenuEvent(Event):
+
+    def __init__(self, player):
+        super().__init__(player)
+        self.title = 'Main Menu'
+        self.responses = [
+            {
+                'id': 'new',
+                'text': 'New Game'
+            },
+            {
+                'id': 'join',
+                'text': 'Join Game'
+            }
+        ]
+
+    def handle_response(self, response_chosen_id, inputs=None):
+        from backend import game_controller
+
+        if response_chosen_id == 'new':
+            # create and join new game
+            game_controller.universal_controller.new_game(self.player)
+        elif response_chosen_id == 'join':
+            # todo: how to implement 'back' feature?
+            self.delegate.schedule_event(JoinMenuEvent(self.player), location='immediately')
+
+        super().handle_response(response_chosen_id, inputs=None)
+
+
+class JoinMenuEvent(Event):
+    def __init__(self, player):
+        super().__init__(player)
+        self.title = 'Join Game'
+        self.text = 'Whose game would you like to join?'
+        self.responses = [
+            {
+                'id': 'join',
+                'text': 'Join Game'
+            }
+        ]
+        self.inputs = [
+            {
+                'id': 'owner_id',
+                'type': 'textbox'
+            }
+        ]
+
+    def handle_response(self, response_chosen_id, inputs=None):
+        assert response_chosen_id == 'join'
+        try:
+            owner_id = inputs['owner_id']
+        except (AttributeError, KeyError):
+            # todo: adopt new exception handling mechanism
+            raise message.InvalidArgumentError
+
+        from backend import game_controller
+        owner = game_controller.universal_controller.player_with_id(owner_id)
+        success = game_controller.universal_controller.join_game(owner, self.player)
+        # todo: client should wait for server's permission before dismissing a message (so that the server need not resend the event if something's wrong)
+        # if game with matching name not found, display this message again
+        if not success:
+            self.delegate.schedule_events(
+                [JoinMenuEvent(self.player), NotificationEvent(self.player, title='Game not found', text='Try again')],
+                location='immediately'
+            )
+
+        super().handle_response(response_chosen_id, inputs=None)
+
+
+#### general events ####
 
 class DismissibleEvent(Event):
 
@@ -125,21 +208,38 @@ class DismissibleEvent(Event):
             }
         ]
 
-    def handle_response(self, response_chosen_id):
+    def handle_response(self, response_chosen_id, inputs=None):
         if response_chosen_id == 'dismiss':
             pass
-        super().handle_response(response_chosen_id)
+        super().handle_response(response_chosen_id, inputs=None)
 
 
-class MessageEvent(DismissibleEvent):
+class NotificationEvent(DismissibleEvent):
 
-    def __init__(self, player, title="", text="", *args, **kwargs):
+    def __init__(self, player, title="", text="", *args, on_dismiss=None, **kwargs):
         super().__init__(player, *args, **kwargs)
         self.title = title
         self.text = text
 
+        # replace standard callback with on_dismiss
+        if on_dismiss:
+            @functools.wraps(on_dismiss)
+            def wrapped_on_dismiss(*args, **kwargs):
+                on_dismiss()
+            self.callback = wrapped_on_dismiss
 
-class FacilityRepairEvent(Event):
+
+#### game events ####
+
+class GameEvent(Event):
+
+    def __init__(self, player):
+        super().__init__(player)
+        self.facility = player.current_job
+        self.game = player.current_game
+
+
+class FacilityRepairEvent(GameEvent):
 
     def __init__(self, player):
         super().__init__(player)
@@ -159,7 +259,7 @@ class FacilityRepairEvent(Event):
                 }
             ]
 
-    def handle_response(self, response_chosen_id):
+    def handle_response(self, response_chosen_id, inputs=None):
         if response_chosen_id == 'repair':
             # client will need to check if enough log, maybe grey out option otherwise
             assert self.player.inventory['log'] > 0
@@ -174,7 +274,7 @@ class FacilityRepairEvent(Event):
             # nothing happens
             pass
 
-        super().handle_response(response_chosen_id)
+        super().handle_response(response_chosen_id, inputs=None)
 
     #### helpers ####
 
@@ -211,7 +311,7 @@ class FacilityRepairEvent(Event):
                 adjectives[int(math.floor(number / 3.0))])
 
 
-class ResourceHarvestEvent(DismissibleEvent):
+class ResourceHarvestEvent(GameEvent, DismissibleEvent):
 
     def __init__(self, player):
         super().__init__(player)
@@ -229,7 +329,7 @@ class ResourceHarvestEvent(DismissibleEvent):
         self.player.add_inventory(**{resource: resource_yield})
 
 
-class AnimalAttackEvent(Event):
+class AnimalAttackEvent(GameEvent):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -256,7 +356,7 @@ class AnimalAttackEvent(Event):
         risk = self.game.MAX_ANIMAL_ATTACK_RISK * (1 - condition) if self.facility != 'watchtower' else 1.0
         return random.random() < risk
 
-    def handle_response(self, response_chosen_id):
+    def handle_response(self, response_chosen_id, inputs=None):
         if response_chosen_id == 'shoot':
             # client will need to check if enough bullets, maybe grey out option otherwise
             assert self.player.inventory['bullet'] > 0
@@ -267,4 +367,4 @@ class AnimalAttackEvent(Event):
             # damage player health
             self.player.add_condition(health=-self.game.ANIMAL_ATTACK_HEALTH_DAMAGE)
 
-        super().handle_response(response_chosen_id)
+        super().handle_response(response_chosen_id, inputs=None)

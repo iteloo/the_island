@@ -22,6 +22,9 @@ class @LoginController
 		$(".interface").append @background
 
 	finish: ->
+		# Destroy any evidence of the cookie
+		document.cookie = name + '=; expires=Thu, 01-Jan-70 00:00:01 GMT;';
+		# and then re-bake it.
 		document.cookie = JSON.stringify { username: @input.val() }
 		@background.remove()
 		window.connectToGame()
