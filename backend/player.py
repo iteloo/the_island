@@ -211,3 +211,11 @@ class Player(message.MessageDelegate):
         self.current_game = None
         # tell client to refresh
         self.refresh()
+
+    def will_be_stashed(self, game):
+        pass
+
+    def will_be_unstashed(self, game):
+        # hack: initiate first update
+        self.inventory = self.inventory
+        self.condition = self.condition
