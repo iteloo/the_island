@@ -14,9 +14,13 @@
       this.response_handlers = [];
       this.event_responders = [];
       me = this;
-      this.socket.onmessage = function(message) {
-        return me.onmessage.call(me, message);
-      };
+      this.socket.onmessage = (function(_this) {
+        return function(message) {
+          return setTimeout(function() {
+            return _this.onmessage(message);
+          }, 1);
+        };
+      })(this);
       this.transaction('server_info', {}, function(data) {
         console.log("Attempted version validation. Received response:");
         console.log(data);
@@ -655,7 +659,7 @@
       _ref = data.inventory;
       for (name in _ref) {
         amount = _ref[name];
-        if (window.stage instanceof TradingStage) {
+        if ((window.stage != null) && window.stage instanceof TradingStage) {
           player.products[name].amount = amount - window.stage.products[name].for_trade;
         } else {
           player.products[name].amount = amount;
@@ -669,7 +673,9 @@
           player.setFood(data.condition.antihunger);
         }
       }
-      stage.update();
+      if (typeof stage !== "undefined" && stage !== null) {
+        stage.update();
+      }
       window.inventorypanel.needsRefresh();
       return window.updateInterface();
     });

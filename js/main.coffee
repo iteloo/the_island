@@ -82,7 +82,7 @@ window.go = ->
 	pycon.register_for_event 'update_player_info', (data) ->
 		# Load up all of the data.
 		for name,amount of data.inventory
-			if window.stage instanceof TradingStage
+			if window.stage? and window.stage instanceof TradingStage
 				player.products[name].amount = amount - window.stage.products[name].for_trade
 			else
 				player.products[name].amount = amount
@@ -93,7 +93,7 @@ window.go = ->
 			player.setFood(data.condition.antihunger) if data.condition.antihunger?
 
 		# Tell the stage to update
-		stage.update()
+		stage.update() if stage?
 		window.inventorypanel.needsRefresh()
 		window.updateInterface()
 		
