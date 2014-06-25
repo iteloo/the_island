@@ -141,7 +141,8 @@ class Game(object):
         helpers.print_header("==> %s joined" % new_player)
 
         # tell current stage to modify any data
-        self.current_stage.handle_add_player(new_player)
+        if self.current_stage:
+            self.current_stage.handle_add_player(new_player)
 
         # notify all players that player count has changed
         # todo: observe player count automatically somehow (similar to KVO)
@@ -156,7 +157,8 @@ class Game(object):
         helpers.print_header("==> %s left" % player)
 
         # tell current stage to modify any data
-        self.current_stage.handle_remove_player(player)
+        if self.current_stage:
+            self.current_stage.handle_remove_player(player)
 
         # notify all players that player count has changed
         # todo: observe player count automatically somehow (similar to KVO)
@@ -179,7 +181,8 @@ class Game(object):
         self._stashed_players.append(player)
 
         # tell current stage to modify any data
-        self.current_stage.handle_stash_player(player)
+        if self.current_stage:
+            self.current_stage.handle_stash_player(player)
 
         # notify all players that player count has changed
         # todo: observe player count automatically somehow (similar to KVO)
@@ -201,7 +204,8 @@ class Game(object):
         self._players.append(player)
 
         # tell current stage to modify any data
-        self.current_stage.handle_unstash_player(player)
+        if self.current_stage:
+            self.current_stage.handle_unstash_player(player)
 
         # notify all players that player count has changed
         # todo: observe player count automatically somehow (similar to KVO)

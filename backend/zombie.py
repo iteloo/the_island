@@ -23,6 +23,16 @@ class Zombie(message.MessageDelegate):
     ### server-side methods ###
 
     @staticmethod
+    def echo(callback, *args, **kwargs):
+        """Echo args back to callback
+
+        For testing purposes only.
+
+        """
+
+        callback(*args, **kwargs)
+
+    @staticmethod
     def server_info(callback: collections.Callable) -> None:
         """Return information about the current running version of the server"""
 
@@ -55,12 +65,6 @@ class Zombie(message.MessageDelegate):
         elif (not p) or (p and not p.current_game):
             # display main menu
             p.display_main_menu()
-
-    ### client-side methods ###
-
-    @message.sending
-    def echo(self, callback: collections.Callable, *args, **kwargs):
-        pass
 
     ### message delegate methods ###
 
