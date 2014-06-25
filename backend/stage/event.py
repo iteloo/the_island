@@ -103,10 +103,17 @@ class Event():
 
     def should_happen(self):
         """override to use to decide if event happens (e.g. based on some risk or condition)"""
+
         return True
+
+    def before_evoke(self):
+        pass
 
     def evoke(self):
         if self.should_happen():
+            # call before_evoke
+            self.before_evoke()
+            # call `display_event` on client
             self.player.display_event(title=self.title, image_name=self.image_name, text=self.text, responses=self.responses, inputs=self.inputs, callback=self.handle_response)
         else:
             self.end()
@@ -128,8 +135,8 @@ class Event():
 
 class MainMenuEvent(Event):
 
-    def __init__(self, player):
-        super().__init__(player)
+    def before_evoke(self):
+        super().before_evoke()
         self.title = 'Main Menu'
         self.responses = [
             {
@@ -156,8 +163,9 @@ class MainMenuEvent(Event):
 
 
 class JoinMenuEvent(Event):
-    def __init__(self, player):
-        super().__init__(player)
+
+    def before_evoke(self):
+        super().before_evoke()
         self.title = 'Join Game'
         self.text = 'Whose game would you like to join?'
         self.responses = [
@@ -233,16 +241,17 @@ class NotificationEvent(DismissibleEvent):
 
 class GameEvent(Event):
 
-    def __init__(self, player):
-        super().__init__(player)
-        self.facility = player.current_job
-        self.game = player.current_game
+    def before_evoke(self):
+        super().before_evoke()
+
+        self.facility = self.player.current_job
+        self.game = self.player.current_game
 
 
 class FacilityRepairEvent(GameEvent):
 
-    def __init__(self, player):
-        super().__init__(player)
+    def before_evoke(self):
+        super().before_evoke()
 
         self.text = 'The %s is looking %s. ' % (self.player.current_job, self.describe(self.game.facility_condition[self.facility]))
         self.responses += [
@@ -313,8 +322,8 @@ class FacilityRepairEvent(GameEvent):
 
 class ResourceHarvestEvent(GameEvent, DismissibleEvent):
 
-    def __init__(self, player):
-        super().__init__(player)
+    def before_evoke(self):
+        super().before_evoke()
 
         resource = self.player.current_game.resource_with_job(self.facility)
 
@@ -331,8 +340,8 @@ class ResourceHarvestEvent(GameEvent, DismissibleEvent):
 
 class AnimalAttackEvent(GameEvent):
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def before_evoke(self):
+        super().before_evoke()
 
         self.title = "A wild animal attacked!"
         self.image_name = 'assets/owlbear.jpeg'
@@ -352,6 +361,8 @@ class AnimalAttackEvent(GameEvent):
             ]
 
     def should_happen(self):
+        super().before_evoke()
+
         condition = self.player.current_game.facility_condition[self.facility]
         risk = self.game.MAX_ANIMAL_ATTACK_RISK * (1 - condition) if self.facility != 'watchtower' else 1.0
         return random.random() < risk
@@ -368,3 +379,72 @@ class AnimalAttackEvent(GameEvent):
             self.player.add_condition(health=-self.game.ANIMAL_ATTACK_HEALTH_DAMAGE)
 
         super().handle_response(response_chosen_id, inputs=None)
+
+
+class BoatBuildingEvent(GameEvent):
+
+    def before_evoke(self):
+        super().before_evoke()
+
+        # compute the log cost per person
+        num_player_in_production = len(self.game.players_with_job('production'))
+        self.log_cost_per_person = self.log_cost_per_player(num_player_in_production)
+
+        # construct message
+        self.title = 'Invest in a boat'
+        self.text = 'Everyone here has to chip in %d logs for the boat to be built. ' % self.log_cost_per_person
+        self.responses = [
+            {
+                'id': 'no',
+                'text': 'Not now'
+            }
+        ]
+        # if player has enough logs, show option
+        if self.player.inventory['log'] >= self.log_cost_per_person:
+            self.responses += [
+                {
+                    'id': 'invest',
+                    'text': 'Invest (%d logs)' % self.log_cost_per_person
+                }
+            ]
+        # otherwise, tell them they do not have enough in the text
+        else:
+            self.text += 'You don\'t have enough logs...'
+
+    def handle_response(self, response_chosen_id, inputs=None):
+        # if player choose to invest
+        if response_chosen_id == 'invest':
+            # take the logs
+            self.player.subtract_inventory(log=self.log_cost_per_person)
+            # mark them down for potentially leaving the island
+            day_stage = self.player.current_game.current_stage
+            assert day_stage.stage_type == 'Day'
+            day_stage.invest_in_boat(self.player)
+        # else do nothing if they say no
+
+        super().handle_response(response_chosen_id, inputs=None)
+
+    @staticmethod
+    def log_cost_per_player(num_players_in_production):
+        # todo: come up with meaningful algorithm
+        return 1
+
+
+class BoatSuccessEvent(GameEvent):
+
+    def before_evoke(self):
+        super().before_evoke()
+
+        self.title = 'The boat is built'
+        self.text = 'You may now leave the island!'
+        self.responses = [
+            {
+                'id': 'leave',
+                'text': 'Leave'
+            }
+        ]
+
+    def handle_response(self, response_chosen_id, inputs=None):
+        self.player.notify(title='Congratulations!', text='You defeated the island', on_dismiss=self.player.refresh)
+
+        super().handle_response(response_chosen_id, inputs)
