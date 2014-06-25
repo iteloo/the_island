@@ -673,7 +673,9 @@
           player.setFood(data.condition.antihunger);
         }
       }
-      stage.update();
+      if (typeof stage !== "undefined" && stage !== null) {
+        stage.update();
+      }
       window.inventorypanel.needsRefresh();
       return window.updateInterface();
     });
