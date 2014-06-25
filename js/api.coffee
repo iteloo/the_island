@@ -15,8 +15,10 @@ class @PyAPI
 		# Connect this PyAPI class to the onmessage
 		# event for the socket.
 		me = @
-		@socket.onmessage = (message) ->
-			me.onmessage.call me, message
+		@socket.onmessage = (message) =>
+			setTimeout =>
+				@onmessage message
+			,1
 
 		# Verify the server version using this method.
 		@transaction 'server_info', {} , (data) ->
