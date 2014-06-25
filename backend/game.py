@@ -2,6 +2,7 @@ from backend import helpers
 from backend.stage import job_stage
 from backend.stage import day_stage
 from backend.stage import trading_stage
+from backend import observed_collection
 
 
 class Game(object):
@@ -35,7 +36,8 @@ class Game(object):
     def __init__(self, owner, delegate):
         self.owner = owner
         self._delegate = delegate
-        self._players = []
+        self._players = observed_collection.ObservedList()
+        self._players.add_observer(observer=self, callback=self.players_list_updated)
         self._stashed_players = []
 
         # stage management variables
@@ -134,6 +136,11 @@ class Game(object):
     def players(self):
         return self._players.copy()
 
+    def players_list_updated(self, data, update_type):
+        # notify all players that player count has changed
+        for p in self.players:
+            p.update_game_info(player_count=len(self.players))
+
     def add_player(self, new_player):
         self._players.append(new_player)
 
@@ -143,11 +150,6 @@ class Game(object):
         # tell current stage to modify any data
         if self.current_stage:
             self.current_stage.handle_add_player(new_player)
-
-        # notify all players that player count has changed
-        # todo: observe player count automatically somehow (similar to KVO)
-        for p in self.players:
-            p.update_game_info(player_count=len(self.players))
 
     def remove_player(self, player):
         # remove players from self.players
@@ -159,11 +161,6 @@ class Game(object):
         # tell current stage to modify any data
         if self.current_stage:
             self.current_stage.handle_remove_player(player)
-
-        # notify all players that player count has changed
-        # todo: observe player count automatically somehow (similar to KVO)
-        for p in self.players:
-            p.update_game_info(player_count=len(self.players))
 
         # if the owner left, game should terminate itself
         if player is self.owner:
@@ -184,13 +181,8 @@ class Game(object):
         if self.current_stage:
             self.current_stage.handle_stash_player(player)
 
-        # notify all players that player count has changed
-        # todo: observe player count automatically somehow (similar to KVO)
-        for p in self.players:
-            p.update_game_info(player_count=len(self.players))
-
         # logging
-        helpers.print_header("==> %s is disconnected" % player)
+        helpers.print_header("==> %s is stashed" % player)
 
     def unstash_player(self, player):
         # todo: finish implementing this
@@ -207,10 +199,5 @@ class Game(object):
         if self.current_stage:
             self.current_stage.handle_unstash_player(player)
 
-        # notify all players that player count has changed
-        # todo: observe player count automatically somehow (similar to KVO)
-        for p in self.players:
-            p.update_game_info(player_count=len(self.players))
-
         # logging
-        helpers.print_header("==> %s is reconnected" % player)
+        helpers.print_header("==> %s is unstashed" % player)

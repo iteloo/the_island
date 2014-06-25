@@ -1,6 +1,7 @@
 from backend import message
 from backend import helpers
 from backend.stage import event
+from backend import observed_collection
 
 import collections
 
@@ -126,45 +127,27 @@ class Player(message.MessageDelegate):
     def inventory(self):
         return self._inventory.copy()
 
-    @inventory.setter
-    def inventory(self, value):
-        self._inventory = value
-        self.update_player_info(self.inventory, self.condition)
-
     @property
     def condition(self):
         return self._condition.copy()
 
-    @condition.setter
-    def condition(self, value):
-        self._condition = value
-        self.update_player_info(self.inventory, self.condition)
-
     def add_inventory(self, **items):
         for r, count in items.items():
             self._inventory[r] += count
-        # hack: notify client
-        self.inventory = self.inventory
 
     def subtract_inventory(self, **items):
         for r, count in items.items():
             self._inventory[r] -= count
-        # hack: notify client
-        self.inventory = self.inventory
 
     def add_condition(self, **condition):
         for r, count in condition.items():
             new_r = self.condition[r] + count
             self._condition[r] = min(new_r, self.MAX_CONDITIONS[r])
-        # hack: notify client
-        self.condition = self.condition
 
     def subtract_condition(self, **condition):
         for r, count in condition.items():
             new_r = self.condition[r] - count
             self._condition[r] = max(new_r, self.MIN_CONDITIONS[r])
-        # hack: notify client
-        self.condition = self.condition
 
     ### event handler delegate methods
 
@@ -192,23 +175,30 @@ class Player(message.MessageDelegate):
 
     ### game management methods ###
 
+    def player_info_updated(self, info, update_type):
+        self.update_player_info(self.inventory, self.condition)
+
     def display_main_menu(self):
         self.event_handler.schedule_event(event.MainMenuEvent(self), location='immediately')
 
     def will_join_game(self, game):
-        self.current_game = game
-
         # initialize game state vars
+        self.current_game = game
         self.current_job = None
-        self._inventory = dict((r, 4) for r in game.resources)
-        self._condition = dict(zip(Player.conditions, [100, 100]))
-
-        # hack: initiate first update
-        self.inventory = self.inventory
-        self.condition = self.condition
+        self._inventory = observed_collection.ObservedDict()
+        self._condition = observed_collection.ObservedDict()
+        self._inventory.add_observer(self, self.player_info_updated)
+        self._condition.add_observer(self, self.player_info_updated)
+        self._inventory.update(dict((r, 4) for r in game.resources))
+        self._condition.update(dict(zip(Player.conditions, [100, 100])))
 
     def did_quit_game(self, game):
+        # clean up vars
         self.current_game = None
+        self.current_job = None
+        self._inventory = None
+        self._condition = None
+
         # tell client to refresh
         self.refresh()
 
@@ -217,5 +207,4 @@ class Player(message.MessageDelegate):
 
     def will_be_unstashed(self, game):
         # hack: initiate first update
-        self.inventory = self.inventory
-        self.condition = self.condition
+        self._inventory.update(self.inventory)
