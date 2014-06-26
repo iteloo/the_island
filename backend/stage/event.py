@@ -187,8 +187,7 @@ class JoinMenuEvent(Event):
         try:
             owner_id = inputs['owner_id']
         except (AttributeError, KeyError):
-            # todo: adopt new exception handling mechanism
-            raise message.InvalidArgumentError
+            raise message.InvalidArgumentError("No `owner_id` included or no `inputs` provided")
 
         from backend import game_controller
         owner = game_controller.universal_controller.player_with_id(owner_id)
@@ -273,7 +272,7 @@ class FacilityRepairEvent(GameEvent):
         if response_chosen_id == 'repair':
             # client will need to check if enough log, maybe grey out option otherwise
             assert self.player.inventory['log'] > 0
-            self.player.subtract_inventory(log=1)
+            self.player.inventory['log'] -= 1
 
             # repair facility
             self.facility.repair()
@@ -326,7 +325,7 @@ class ResourceHarvestEvent(GameEvent, DismissibleEvent):
     def before_evoke(self):
         super().before_evoke()
 
-        resource = self.facility.resource_yielded()
+        resource = self.facility.resource_yielded
 
         # calculate resource yield
         condition = self.facility.condition
@@ -336,7 +335,7 @@ class ResourceHarvestEvent(GameEvent, DismissibleEvent):
         self.text = 'You received %d more %s. ' % (resource_yield, resource)
 
         # give player resource
-        self.player.add_inventory(**{resource: resource_yield})
+        self.player.inventory[resource] += resource_yield
 
 
 class AnimalAttackEvent(GameEvent):
@@ -372,12 +371,12 @@ class AnimalAttackEvent(GameEvent):
         if response_chosen_id == 'shoot':
             # client will need to check if enough bullets, maybe grey out option otherwise
             assert self.player.inventory['bullet'] > 0
-            self.player.add_inventory(bullet=-1)
+            self.player.inventory['bullet'] -= 1
         elif response_chosen_id == 'ignore':
             # damage the facility the player is currently at
             self.facility.damage(damage_type='animal attack')
             # damage player health
-            self.player.add_condition(health=-self.game.ANIMAL_ATTACK_HEALTH_DAMAGE)
+            self.player.condition['health'] -= self.game.ANIMAL_ATTACK_HEALTH_DAMAGE
 
         super().handle_response(response_chosen_id, inputs=None)
 
@@ -416,7 +415,7 @@ class BoatBuildingEvent(GameEvent):
         # if player choose to invest
         if response_chosen_id == 'invest':
             # take the logs
-            self.player.subtract_inventory(log=self.log_cost_per_person)
+            self.player.inventory['log'] -= self.log_cost_per_person
             # mark them down for potentially leaving the island
             day_stage = self.player.current_game.current_stage
             assert day_stage.stage_type == 'Day'

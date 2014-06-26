@@ -25,8 +25,6 @@ class Game(object):
 
     """
 
-    resources = ['log', 'food', 'bandage', 'bullet']
-    jobs = ['production', 'farm', 'hospital', 'watchtower']
     DEFAULT_HEALTH_DAMAGE = 5.0
     ANIMAL_ATTACK_HEALTH_DAMAGE = 35.0
     RESOURCE_HARVEST_YIELD_AT_FULL_CONDITION = 3
@@ -54,7 +52,7 @@ class Game(object):
     def __str__(self):
         return "%s's game" % self.owner
 
-    ### stage management ###
+    ### main logic / stage management ###
 
     def begin(self):
         # todo: add more refined game state handling
@@ -113,7 +111,7 @@ class Game(object):
         # begin new stage
         self.current_stage.begin()
 
-    ### player management methods ###
+    ### player management ###
 
     @property
     def players(self):

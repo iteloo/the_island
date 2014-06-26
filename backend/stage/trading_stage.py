@@ -16,24 +16,28 @@ class TradingStage(ready_stage.ReadyStage):
     def trade_proposed(self, sender, items: dict, callback: collections.Callable) -> None:
 
         # create new trade proposal
-        new_proposal = TradeProposal(sender, items, callback)
+        proposal1 = TradeProposal(sender, items, callback)
+        # get previous proposal
+        proposal2 = self._last_recorded_proposal
 
         # if there is already a recorded proposal with similar time, then facilitate trading
-        if self._last_recorded_proposal and new_proposal.close_to(self._last_recorded_proposal):
+        if proposal2 and proposal1.close_to(proposal2):
             # send items to respective players through callback
-            new_proposal.callback(items=self._last_recorded_proposal.items)
-            self._last_recorded_proposal.callback(items=new_proposal.items)
+            proposal1.callback(items=proposal2.items)
+            proposal2.callback(items=proposal1.items)
 
-            # update inventory (will result in call to update in client, which must come AFTER invoking callback to proposed trade
-            new_proposal.player.subtract_inventory(**new_proposal.items)
-            new_proposal.player.add_inventory(**self._last_recorded_proposal.items)
-            self._last_recorded_proposal.player.subtract_inventory(**self._last_recorded_proposal.items)
-            self._last_recorded_proposal.player.add_inventory(**new_proposal.items)
+            # update inventories (will result in call to update in client, which must come AFTER invoking callback to proposed trade)
+            for i, count in proposal1.items.items():
+                proposal1.player.inventory[i] -= count
+                proposal2.player.inventory[i] += count
+            for i, count in proposal2.items.items():
+                proposal2.player.inventory[i] -= count
+                proposal1.player.inventory[i] += count
 
         # otherwise, record as first
         else:
-            print("Trade proposed by %s." % new_proposal.player)
-            self._last_recorded_proposal = new_proposal
+            print("Trade proposed by %s." % proposal1.player)
+            self._last_recorded_proposal = proposal1
 
 
 class TradeProposal(object):

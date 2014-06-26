@@ -14,11 +14,6 @@ class Facility:
         self._condition = self.max_condition
         self._players = []
 
-    @classmethod
-    @abc.abstractmethod
-    def resource_yielded(cls):
-        return
-
     @property
     def players(self):
         return self._players.copy()
@@ -48,31 +43,19 @@ class Facility:
 
 class Production(Facility):
     name = 'production'
-
-    @classmethod
-    def resource_yielded(cls):
-        return 'log'
+    resource_yielded = 'log'
 
 
 class Farm(Facility):
     name = 'farm'
-
-    @classmethod
-    def resource_yielded(cls):
-        return 'food'
+    resource_yielded = 'food'
 
 
 class Hospital(Facility):
     name = 'hospital'
-
-    @classmethod
-    def resource_yielded(cls):
-        return 'bandage'
+    resource_yielded = 'bandage'
 
 
 class Watchtower(Facility):
     name = 'watchtower'
-
-    @classmethod
-    def resource_yielded(cls):
-        return 'bullet'
+    resource_yielded = 'bullet'
