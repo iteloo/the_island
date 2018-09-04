@@ -10,10 +10,6 @@
 - author : Colin Merkel + Leo Hsu
 
 
-## What is this thing?
-
-I do not know.
-
 ## Setup and starting the server
 
 You need to first install the project dependencies. We recommend using virtualenvwrapper: 
